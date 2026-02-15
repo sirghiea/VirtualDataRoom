@@ -87,6 +87,9 @@ export default function DataRoomPage() {
               currentFolderId={state.currentFolderId}
               rootFolderId={state.currentDataRoom.rootFolderId}
               onNavigate={navigateToFolder}
+              onRename={renameFolder}
+              onDelete={removeFolder}
+              getDescendantCounts={getDescendantCounts}
             />
           </div>
         </aside>
