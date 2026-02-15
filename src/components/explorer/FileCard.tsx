@@ -22,7 +22,7 @@ export default function FileCard({ file, onView, onRename, onDelete }: FileCardP
   return (
     <>
       <div
-        onDoubleClick={() => onView(file)}
+        onClick={() => onView(file)}
         className="glass group relative flex cursor-pointer items-center gap-3 rounded-xl p-3 transition-all hover:bg-glass-hover hover:border-primary/20"
       >
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-400/10 text-rose-400">
