@@ -3,10 +3,12 @@ import { Shield } from 'lucide-react';
 
 export default function Header() {
   return (
-    <header className="sticky top-0 z-40 flex h-14 items-center border-b bg-background px-4 lg:px-6">
-      <Link to="/" className="flex items-center gap-2 font-semibold text-foreground">
-        <Shield size={22} className="text-primary" />
-        <span className="text-base">Virtual Data Room</span>
+    <header className="glass sticky top-0 z-40 flex h-14 items-center px-4 lg:px-6">
+      <Link to="/" className="flex items-center gap-2.5 font-semibold text-foreground">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/20">
+          <Shield size={18} className="text-primary" />
+        </div>
+        <span className="text-base tracking-tight">Virtual Data Room</span>
       </Link>
     </header>
   );

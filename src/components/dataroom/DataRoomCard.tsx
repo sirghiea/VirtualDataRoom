@@ -22,11 +22,11 @@ export default function DataRoomCard({ dataRoom, onRename, onDelete }: DataRoomC
     <>
       <div
         onClick={() => navigate(`/dataroom/${dataRoom.id}`)}
-        className="group relative cursor-pointer rounded-lg border bg-background p-5 shadow-sm transition-all hover:shadow-md hover:border-primary/30"
+        className="glass group relative cursor-pointer rounded-xl p-5 transition-all hover:bg-glass-hover hover:shadow-lg hover:shadow-primary/5 hover:border-primary/20"
       >
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 text-primary">
               <Database size={20} />
             </div>
             <div>
@@ -45,7 +45,7 @@ export default function DataRoomCard({ dataRoom, onRename, onDelete }: DataRoomC
                 e.stopPropagation();
                 setMenuOpen((v) => !v);
               }}
-              className="rounded-md p-1.5 text-muted hover:bg-accent hover:text-foreground transition-colors"
+              className="rounded-lg p-1.5 text-muted hover:bg-white/10 hover:text-foreground transition-colors"
             >
               <MoreVertical size={16} />
             </button>
@@ -53,14 +53,14 @@ export default function DataRoomCard({ dataRoom, onRename, onDelete }: DataRoomC
             {menuOpen && (
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
-                <div className="absolute right-0 top-full z-20 mt-1 w-40 rounded-md border bg-background shadow-lg">
+                <div className="glass-strong absolute right-0 top-full z-20 mt-1 w-40 rounded-xl shadow-xl overflow-hidden">
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       setMenuOpen(false);
                       setRenameOpen(true);
                     }}
-                    className="flex w-full items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent transition-colors"
+                    className="flex w-full items-center gap-2 px-3 py-2.5 text-sm text-foreground hover:bg-white/10 transition-colors"
                   >
                     <Pencil size={14} />
                     Rename
@@ -71,7 +71,7 @@ export default function DataRoomCard({ dataRoom, onRename, onDelete }: DataRoomC
                       setMenuOpen(false);
                       setDeleteOpen(true);
                     }}
-                    className="flex w-full items-center gap-2 px-3 py-2 text-sm text-destructive hover:bg-red-50 transition-colors"
+                    className="flex w-full items-center gap-2 px-3 py-2.5 text-sm text-destructive hover:bg-white/10 transition-colors"
                   >
                     <Trash2 size={14} />
                     Delete

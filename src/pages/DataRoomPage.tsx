@@ -69,14 +69,14 @@ export default function DataRoomPage() {
     <div className="flex h-[calc(100vh-3.5rem)]">
       {/* Sidebar */}
       {sidebarOpen && (
-        <aside className="hidden md:flex w-60 shrink-0 flex-col border-r bg-surface overflow-y-auto">
-          <div className="flex items-center justify-between border-b px-3 py-2.5">
+        <aside className="hidden md:flex w-60 shrink-0 flex-col border-r border-white/5 bg-white/[0.02] overflow-y-auto">
+          <div className="flex items-center justify-between border-b border-white/5 px-3 py-2.5">
             <span className="text-xs font-semibold uppercase tracking-wider text-muted">
               Folders
             </span>
             <button
               onClick={() => setSidebarOpen(false)}
-              className="rounded p-1 text-muted hover:bg-accent hover:text-foreground transition-colors"
+              className="rounded-lg p-1 text-muted hover:bg-white/10 hover:text-foreground transition-colors"
             >
               <PanelLeftClose size={16} />
             </button>
@@ -95,12 +95,12 @@ export default function DataRoomPage() {
       {/* Main content */}
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Top bar */}
-        <div className="flex items-center justify-between border-b px-4 py-3">
+        <div className="flex items-center justify-between border-b border-white/5 px-4 py-3">
           <div className="flex items-center gap-3">
             {!sidebarOpen && (
               <button
                 onClick={() => setSidebarOpen(true)}
-                className="hidden md:block rounded p-1 text-muted hover:bg-accent hover:text-foreground transition-colors"
+                className="hidden md:block rounded-lg p-1 text-muted hover:bg-white/10 hover:text-foreground transition-colors"
               >
                 <PanelLeft size={16} />
               </button>

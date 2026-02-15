@@ -39,9 +39,9 @@ export default function FolderCard({
     <>
       <div
         onDoubleClick={() => onOpen(folder.id)}
-        className="group relative flex cursor-pointer items-center gap-3 rounded-lg border bg-background p-3 transition-all hover:shadow-sm hover:border-primary/30"
+        className="glass group relative flex cursor-pointer items-center gap-3 rounded-xl p-3 transition-all hover:bg-glass-hover hover:border-primary/20"
       >
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-400/10 text-amber-400">
           <FolderIcon size={20} />
         </div>
         <span
@@ -57,7 +57,7 @@ export default function FolderCard({
               e.stopPropagation();
               setMenuOpen((v) => !v);
             }}
-            className="rounded-md p-1 text-muted opacity-0 group-hover:opacity-100 hover:bg-accent hover:text-foreground transition-all"
+            className="rounded-lg p-1 text-muted opacity-0 group-hover:opacity-100 hover:bg-white/10 hover:text-foreground transition-all"
           >
             <MoreVertical size={16} />
           </button>
@@ -65,14 +65,14 @@ export default function FolderCard({
           {menuOpen && (
             <>
               <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
-              <div className="absolute right-0 top-full z-20 mt-1 w-36 rounded-md border bg-background shadow-lg">
+              <div className="glass-strong absolute right-0 top-full z-20 mt-1 w-36 rounded-xl shadow-xl overflow-hidden">
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     setMenuOpen(false);
                     onOpen(folder.id);
                   }}
-                  className="flex w-full items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent transition-colors"
+                  className="flex w-full items-center gap-2 px-3 py-2.5 text-sm text-foreground hover:bg-white/10 transition-colors"
                 >
                   <FolderIcon size={14} />
                   Open
@@ -83,7 +83,7 @@ export default function FolderCard({
                     setMenuOpen(false);
                     setRenameOpen(true);
                   }}
-                  className="flex w-full items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent transition-colors"
+                  className="flex w-full items-center gap-2 px-3 py-2.5 text-sm text-foreground hover:bg-white/10 transition-colors"
                 >
                   <Pencil size={14} />
                   Rename
@@ -93,7 +93,7 @@ export default function FolderCard({
                     e.stopPropagation();
                     handleDeleteClick();
                   }}
-                  className="flex w-full items-center gap-2 px-3 py-2 text-sm text-destructive hover:bg-red-50 transition-colors"
+                  className="flex w-full items-center gap-2 px-3 py-2.5 text-sm text-destructive hover:bg-white/10 transition-colors"
                 >
                   <Trash2 size={14} />
                   Delete

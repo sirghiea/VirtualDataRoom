@@ -60,8 +60,8 @@ function TreeNode({
           if (hasChildren) setExpanded(true);
         }}
         className={cn(
-          'flex w-full items-center gap-1.5 rounded-md px-2 py-1.5 text-left transition-colors',
-          isActive ? 'bg-primary/10 text-primary font-medium' : 'text-foreground hover:bg-accent'
+          'flex w-full items-center gap-1.5 rounded-lg px-2 py-1.5 text-left transition-colors',
+          isActive ? 'bg-primary/15 text-primary font-medium' : 'text-foreground/80 hover:bg-white/5 hover:text-foreground'
         )}
         style={{ paddingLeft: `${depth * 16 + 8}px` }}
       >
@@ -78,7 +78,7 @@ function TreeNode({
             <span className="inline-block w-3.5" />
           )}
         </span>
-        <FolderIcon size={14} className="shrink-0 text-amber-500" />
+        <FolderIcon size={14} className="shrink-0 text-amber-400/80" />
         <span className="truncate">
           {folder.parentId === null ? 'Root' : folder.name}
         </span>

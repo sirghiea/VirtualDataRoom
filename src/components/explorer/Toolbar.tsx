@@ -15,7 +15,6 @@ export default function Toolbar({ onNewFolder, onUploadFile }: ToolbarProps) {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Reset input so same file can be selected again
     e.target.value = '';
 
     if (file.type !== 'application/pdf') {
@@ -40,14 +39,14 @@ export default function Toolbar({ onNewFolder, onUploadFile }: ToolbarProps) {
     <div className="flex items-center gap-2">
       <button
         onClick={onNewFolder}
-        className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium text-foreground hover:bg-accent transition-colors"
+        className="flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-sm font-medium text-foreground hover:bg-white/10 transition-colors"
       >
         <FolderPlus size={16} />
         <span className="hidden sm:inline">New Folder</span>
       </button>
       <button
         onClick={() => fileInputRef.current?.click()}
-        className="flex items-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary-hover transition-colors"
+        className="flex items-center gap-2 rounded-lg bg-primary/90 px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary transition-all shadow-lg shadow-primary/20"
       >
         <Upload size={16} />
         <span className="hidden sm:inline">Upload PDF</span>

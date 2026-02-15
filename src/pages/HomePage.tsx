@@ -22,17 +22,17 @@ export default function HomePage() {
   };
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8 lg:px-6">
+    <div className="mx-auto max-w-5xl px-4 py-10 lg:px-6">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Data Rooms</h1>
+          <h1 className="text-2xl font-bold text-foreground tracking-tight">Data Rooms</h1>
           <p className="text-sm text-muted mt-1">
             Manage your secure document repositories
           </p>
         </div>
         <button
           onClick={() => setCreateOpen(true)}
-          className="flex items-center gap-2 rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary-hover transition-colors"
+          className="flex items-center gap-2 rounded-lg bg-primary/90 px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary transition-all shadow-lg shadow-primary/20"
         >
           <Plus size={16} />
           New Data Room
@@ -51,7 +51,7 @@ export default function HomePage() {
           action={
             <button
               onClick={() => setCreateOpen(true)}
-              className="flex items-center gap-2 rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary-hover transition-colors"
+              className="flex items-center gap-2 rounded-lg bg-primary/90 px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary transition-all shadow-lg shadow-primary/20"
             >
               <Plus size={16} />
               Create Data Room

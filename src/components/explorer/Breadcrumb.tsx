@@ -9,7 +9,6 @@ interface BreadcrumbProps {
 export default function Breadcrumb({ items, onNavigate }: BreadcrumbProps) {
   if (items.length === 0) return null;
 
-  // Truncate middle segments if too many
   const maxVisible = 4;
   let displayItems = items;
   let truncated = false;

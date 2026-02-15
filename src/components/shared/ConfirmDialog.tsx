@@ -34,7 +34,7 @@ export default function ConfirmDialog({
     <dialog
       ref={dialogRef}
       onClose={onCancel}
-      className="fixed inset-0 z-50 m-auto max-w-md rounded-lg border bg-background p-0 shadow-lg backdrop:bg-black/50"
+      className="fixed inset-0 z-50 m-auto max-w-md glass-strong rounded-2xl p-0 shadow-2xl shadow-black/50 backdrop:bg-black/60 backdrop:backdrop-blur-sm"
     >
       <div className="p-6">
         <h2 className="text-lg font-semibold text-foreground">{title}</h2>
@@ -42,16 +42,16 @@ export default function ConfirmDialog({
         <div className="mt-6 flex justify-end gap-3">
           <button
             onClick={onCancel}
-            className="rounded-md border px-4 py-2 text-sm font-medium text-foreground hover:bg-accent transition-colors"
+            className="rounded-lg border border-white/10 px-4 py-2 text-sm font-medium text-foreground hover:bg-white/10 transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={onConfirm}
-            className={`rounded-md px-4 py-2 text-sm font-medium text-white transition-colors ${
+            className={`rounded-lg px-4 py-2 text-sm font-medium text-white transition-all ${
               destructive
-                ? 'bg-destructive hover:bg-destructive-hover'
-                : 'bg-primary hover:bg-primary-hover'
+                ? 'bg-destructive/90 hover:bg-destructive shadow-lg shadow-destructive/20'
+                : 'bg-primary/90 hover:bg-primary shadow-lg shadow-primary/20'
             }`}
           >
             {confirmLabel}

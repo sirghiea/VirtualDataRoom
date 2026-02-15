@@ -80,50 +80,50 @@ export default function FileViewerModal({ file, getBlob, onClose }: FileViewerMo
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-black/80">
+    <div className="fixed inset-0 z-50 flex flex-col bg-black/90 backdrop-blur-sm animate-[fadeIn_0.15s_ease-out]">
       {/* Toolbar */}
-      <div className="flex h-12 items-center justify-between bg-gray-900 px-4 text-white">
+      <div className="glass-strong flex h-12 items-center justify-between px-4 text-foreground">
         <span className="text-sm font-medium truncate max-w-xs">
           {file.name}.{file.extension}
         </span>
 
         <div className="flex items-center gap-1">
-          <button onClick={zoomOut} className="rounded p-1.5 hover:bg-white/10" title="Zoom out">
+          <button onClick={zoomOut} className="rounded-lg p-1.5 hover:bg-white/10 transition-colors" title="Zoom out">
             <ZoomOut size={18} />
           </button>
-          <span className="min-w-[4rem] text-center text-xs">
+          <span className="min-w-[4rem] text-center text-xs text-muted">
             {Math.round(scale * 100)}%
           </span>
-          <button onClick={zoomIn} className="rounded p-1.5 hover:bg-white/10" title="Zoom in">
+          <button onClick={zoomIn} className="rounded-lg p-1.5 hover:bg-white/10 transition-colors" title="Zoom in">
             <ZoomIn size={18} />
           </button>
-          <button onClick={fitWidth} className="rounded p-1.5 hover:bg-white/10" title="Fit width">
+          <button onClick={fitWidth} className="rounded-lg p-1.5 hover:bg-white/10 transition-colors" title="Fit width">
             <Maximize2 size={18} />
           </button>
 
-          <div className="mx-2 h-5 w-px bg-white/20" />
+          <div className="mx-2 h-5 w-px bg-white/10" />
 
           <button
             onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
             disabled={currentPage <= 1}
-            className="rounded p-1.5 hover:bg-white/10 disabled:opacity-30"
+            className="rounded-lg p-1.5 hover:bg-white/10 disabled:opacity-30 transition-colors"
           >
             <ChevronLeft size={18} />
           </button>
-          <span className="min-w-[5rem] text-center text-xs">
+          <span className="min-w-[5rem] text-center text-xs text-muted">
             {currentPage} / {numPages}
           </span>
           <button
             onClick={() => setCurrentPage((p) => Math.min(numPages, p + 1))}
             disabled={currentPage >= numPages}
-            className="rounded p-1.5 hover:bg-white/10 disabled:opacity-30"
+            className="rounded-lg p-1.5 hover:bg-white/10 disabled:opacity-30 transition-colors"
           >
             <ChevronRight size={18} />
           </button>
 
-          <div className="mx-2 h-5 w-px bg-white/20" />
+          <div className="mx-2 h-5 w-px bg-white/10" />
 
-          <button onClick={onClose} className="rounded p-1.5 hover:bg-white/10" title="Close">
+          <button onClick={onClose} className="rounded-lg p-1.5 hover:bg-white/10 transition-colors" title="Close">
             <X size={18} />
           </button>
         </div>
@@ -133,13 +133,13 @@ export default function FileViewerModal({ file, getBlob, onClose }: FileViewerMo
       <div ref={containerRef} className="flex-1 overflow-auto flex justify-center p-4">
         {loading && (
           <div className="flex items-center justify-center">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-white border-t-transparent" />
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
           </div>
         )}
 
         {error && (
           <div className="flex items-center justify-center">
-            <p className="text-white/80">{error}</p>
+            <p className="text-muted">{error}</p>
           </div>
         )}
 
@@ -155,7 +155,7 @@ export default function FileViewerModal({ file, getBlob, onClose }: FileViewerMo
               scale={scale}
               renderTextLayer
               renderAnnotationLayer
-              className="shadow-2xl"
+              className="shadow-2xl rounded-lg overflow-hidden"
             />
           </Document>
         )}
