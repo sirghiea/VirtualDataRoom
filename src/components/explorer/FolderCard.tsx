@@ -38,7 +38,7 @@ export default function FolderCard({
   return (
     <>
       <div
-        onDoubleClick={() => onOpen(folder.id)}
+        onClick={() => onOpen(folder.id)}
         className="glass group relative flex cursor-pointer items-center gap-3 rounded-xl p-3 transition-all hover:bg-glass-hover hover:border-primary/20"
       >
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-400/10 text-amber-400">
