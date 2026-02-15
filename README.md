@@ -4,6 +4,8 @@ A secure, browser-based document repository built for managing due diligence wor
 
 ## Live Demo
 
+The app is deployed and ready to use — no setup required. Try creating a data room, uploading PDFs, and organizing folders directly in the browser.
+
 🔗 [https://virtual-data-room.vercel.app/](https://virtual-data-room.vercel.app/)
 
 ---
