@@ -51,7 +51,7 @@ export default function FileCard({ file, onView, onRename, onDelete }: FileCardP
           {menuOpen && (
             <>
               <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
-              <div className="glass-strong absolute right-0 top-full z-20 mt-1 w-36 rounded-xl shadow-xl overflow-hidden">
+              <div className="absolute right-0 top-full z-20 mt-1 w-36 rounded-xl shadow-xl overflow-hidden bg-[#1e1e2e] border border-white/10">
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
