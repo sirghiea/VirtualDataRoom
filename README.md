@@ -4,7 +4,7 @@ A secure, browser-based document repository built for managing due diligence wor
 
 ## Live Demo
 
-> _Deployed URL will go here once hosted on Vercel._
+🔗 [https://virtual-data-room.vercel.app/](https://virtual-data-room.vercel.app/)
 
 ---
 
