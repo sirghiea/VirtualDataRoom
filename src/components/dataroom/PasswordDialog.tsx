@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Eye, EyeOff, Lock, ShieldCheck, KeyRound, Unlock } from 'lucide-react';
+import { Eye, EyeOff, Lock, ShieldCheck, KeyRound, Unlock, Check, X } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { passwordSchema } from '@/lib/validation';
+import { passwordSchema, PASSWORD_CHECKS, getPasswordStrength } from '@/lib/validation';
 
 export type PasswordMode = 'set' | 'unlock' | 'change' | 'remove';
 
@@ -84,9 +84,13 @@ export default function PasswordDialog({
   // Reset when external error comes in — mark submitting false
   const effectiveSubmitting = externalError ? false : submitting;
 
+  // Password being validated for strength (the one user is creating)
+  const strengthTarget = mode === 'change' ? newPassword : password;
+  const showStrength = (mode === 'set' || mode === 'change') && strengthTarget.length > 0;
+  const strength = getPasswordStrength(strengthTarget);
+
   const handleOpenChange = (isOpen: boolean) => {
     if (isOpen) {
-      // Reset state when dialog opens
       setPassword('');
       setNewPassword('');
       setConfirmPassword('');
@@ -107,6 +111,22 @@ export default function PasswordDialog({
       if (value !== (mode === 'change' ? newPassword : password)) return 'Passwords do not match';
       return '';
     }
+    // For unlock/remove modes, only check non-empty (no strength rules)
+    if ((mode === 'unlock' || mode === 'remove') && field === 'password') {
+      if (!value.trim()) return 'Password is required';
+      return '';
+    }
+    // For set mode password, or change mode newPassword — full schema
+    if ((mode === 'set' && field === 'password') || (mode === 'change' && field === 'newPassword')) {
+      const result = passwordSchema.safeParse(value);
+      if (result.success) return '';
+      return result.error.issues[0].message;
+    }
+    // For change mode current password — just non-empty
+    if (mode === 'change' && field === 'password') {
+      if (!value.trim()) return 'Password is required';
+      return '';
+    }
     const result = passwordSchema.safeParse(value);
     if (result.success) return '';
     return result.error.issues[0].message;
@@ -117,7 +137,6 @@ export default function PasswordDialog({
     else if (field === 'newPassword') setNewPassword(value);
     else if (field === 'confirm') setConfirmPassword(value);
 
-    // Validate silently (for button disable), hide error
     setShowErrors((prev) => ({ ...prev, [field]: false }));
     const err = validateField(field, value);
     setErrors((prev) => ({ ...prev, [field]: err }));
@@ -259,6 +278,11 @@ export default function PasswordDialog({
               inputRef,
             )}
 
+            {/* Strength meter — shown for set mode after the password field */}
+            {mode === 'set' && showStrength && (
+              <PasswordStrengthMeter password={strengthTarget} strength={strength} />
+            )}
+
             {/* New password (change mode) */}
             {mode === 'change' &&
               renderField(
@@ -269,6 +293,11 @@ export default function PasswordDialog({
                 () => setShowNewPassword((v) => !v),
                 'Choose a new password',
               )}
+
+            {/* Strength meter — shown for change mode after the new password field */}
+            {mode === 'change' && showStrength && (
+              <PasswordStrengthMeter password={strengthTarget} strength={strength} />
+            )}
 
             {/* Confirm (set & change modes) */}
             {(mode === 'set' || mode === 'change') &&
@@ -295,5 +324,67 @@ export default function PasswordDialog({
         </form>
       </DialogContent>
     </Dialog>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Password strength meter sub-component
+// ---------------------------------------------------------------------------
+
+function PasswordStrengthMeter({
+  password,
+  strength,
+}: {
+  password: string;
+  strength: { score: number; label: string; color: string };
+}) {
+  const barColors = [
+    'bg-red-400/60',
+    'bg-orange-400/60',
+    'bg-amber-400/60',
+    'bg-emerald-400/60',
+    'bg-emerald-300/80',
+  ];
+
+  return (
+    <div className="space-y-2.5 -mt-1 pb-1">
+      {/* Strength bar */}
+      <div className="flex items-center gap-2">
+        <div className="flex flex-1 gap-1">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div
+              key={i}
+              className={`h-1 flex-1 rounded-full transition-all duration-300 ${
+                i < strength.score ? barColors[Math.min(strength.score - 1, 4)] : 'bg-white/[0.06]'
+              }`}
+            />
+          ))}
+        </div>
+        <span className={`text-[10px] font-medium ${strength.color} min-w-[70px] text-right`}>
+          {strength.label}
+        </span>
+      </div>
+
+      {/* Checklist */}
+      <div className="grid grid-cols-2 gap-x-3 gap-y-1">
+        {PASSWORD_CHECKS.map((check) => {
+          const passed = check.test(password);
+          return (
+            <div key={check.label} className="flex items-center gap-1.5">
+              {passed ? (
+                <Check size={11} className="text-emerald-400 shrink-0" />
+              ) : (
+                <X size={11} className="text-muted/30 shrink-0" />
+              )}
+              <span
+                className={`text-[11px] ${passed ? 'text-muted/80' : 'text-muted/40'} transition-colors`}
+              >
+                {check.label}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }

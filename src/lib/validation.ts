@@ -106,14 +106,52 @@ export function validateName(
 }
 
 // ---------------------------------------------------------------------------
-// Password schema — used by PasswordDialog (Phase 3)
+// Password schema — used by PasswordDialog
 // ---------------------------------------------------------------------------
 
 export const passwordSchema = z
   .string()
   .min(1, 'Password is required')
-  .min(4, 'Password must be at least 4 characters')
-  .max(128, 'Password must be 128 characters or fewer');
+  .min(6, 'Password must be at least 6 characters')
+  .max(128, 'Password must be 128 characters or fewer')
+  .refine((v) => /[A-Z]/.test(v), {
+    message: 'Must contain at least one uppercase letter',
+  })
+  .refine((v) => /[a-z]/.test(v), {
+    message: 'Must contain at least one lowercase letter',
+  })
+  .refine((v) => /[0-9]/.test(v), {
+    message: 'Must contain at least one number',
+  });
+
+/**
+ * Password strength checks — used by the strength meter UI.
+ * Each check returns true when satisfied.
+ */
+export const PASSWORD_CHECKS = [
+  { label: '6+ characters', test: (v: string) => v.length >= 6 },
+  { label: 'Uppercase letter', test: (v: string) => /[A-Z]/.test(v) },
+  { label: 'Lowercase letter', test: (v: string) => /[a-z]/.test(v) },
+  { label: 'Number', test: (v: string) => /[0-9]/.test(v) },
+  { label: 'Special character', test: (v: string) => /[^A-Za-z0-9]/.test(v) },
+] as const;
+
+/**
+ * Calculate password strength score (0–5).
+ */
+export function getPasswordStrength(password: string): {
+  score: number;
+  label: string;
+  color: string;
+} {
+  if (!password) return { score: 0, label: '', color: '' };
+  const score = PASSWORD_CHECKS.filter((c) => c.test(password)).length;
+  if (score <= 1) return { score, label: 'Very weak', color: 'text-red-400' };
+  if (score === 2) return { score, label: 'Weak', color: 'text-orange-400' };
+  if (score === 3) return { score, label: 'Fair', color: 'text-amber-400' };
+  if (score === 4) return { score, label: 'Strong', color: 'text-emerald-400' };
+  return { score, label: 'Very strong', color: 'text-emerald-300' };
+}
 
 // ---------------------------------------------------------------------------
 // Helpers
