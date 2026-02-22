@@ -2,6 +2,13 @@ import { useState } from 'react';
 import { ChevronRight, Folder as FolderIcon, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import type { Folder } from '@/types';
 import { cn } from '@/lib/utils';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
 import RenameDialog from '@/components/shared/RenameDialog';
 import ConfirmDialog from '@/components/shared/ConfirmDialog';
 
@@ -10,9 +17,10 @@ interface FolderTreeProps {
   currentFolderId: string | null;
   rootFolderId: string;
   onNavigate: (folderId: string) => void;
-  onRename: (id: string, name: string) => Promise<void>;
-  onDelete: (id: string) => Promise<void>;
+  onRename: (id: string, name: string) => void;
+  onDelete: (id: string) => void;
   getDescendantCounts: (id: string) => Promise<{ folders: number; files: number }>;
+  onDropFile?: (fileId: string, targetFolderId: string) => void;
 }
 
 export default function FolderTree({
@@ -23,17 +31,22 @@ export default function FolderTree({
   onRename,
   onDelete,
   getDescendantCounts,
+  onDropFile,
 }: FolderTreeProps) {
+  const rootFolder = folders.find((f) => f.id === rootFolderId);
+  if (!rootFolder) return null;
+
   return (
     <div className="text-sm">
       <TreeNode
-        folder={folders.find((f) => f.id === rootFolderId)!}
+        folder={rootFolder}
         folders={folders}
         currentFolderId={currentFolderId}
         onNavigate={onNavigate}
         onRename={onRename}
         onDelete={onDelete}
         getDescendantCounts={getDescendantCounts}
+        onDropFile={onDropFile}
         depth={0}
         defaultExpanded
       />
@@ -46,9 +59,10 @@ interface TreeNodeProps {
   folders: Folder[];
   currentFolderId: string | null;
   onNavigate: (folderId: string) => void;
-  onRename: (id: string, name: string) => Promise<void>;
-  onDelete: (id: string) => Promise<void>;
+  onRename: (id: string, name: string) => void;
+  onDelete: (id: string) => void;
   getDescendantCounts: (id: string) => Promise<{ folders: number; files: number }>;
+  onDropFile?: (fileId: string, targetFolderId: string) => void;
   depth: number;
   defaultExpanded?: boolean;
 }
@@ -61,14 +75,15 @@ function TreeNode({
   onRename,
   onDelete,
   getDescendantCounts,
+  onDropFile,
   depth,
   defaultExpanded = false,
 }: TreeNodeProps) {
   const [expanded, setExpanded] = useState(defaultExpanded);
-  const [menuOpen, setMenuOpen] = useState(false);
   const [renameOpen, setRenameOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteDesc, setDeleteDesc] = useState('');
+  const [dragOver, setDragOver] = useState(false);
 
   const children = folders.filter((f) => f.parentId === folder.id);
   const hasChildren = children.length > 0;
@@ -76,22 +91,48 @@ function TreeNode({
   const isRoot = folder.parentId === null;
 
   const handleDeleteClick = async () => {
-    setMenuOpen(false);
     const counts = await getDescendantCounts(folder.id);
     const parts: string[] = [];
-    if (counts.folders > 0) parts.push(`${counts.folders} subfolder${counts.folders > 1 ? 's' : ''}`);
-    if (counts.files > 0) parts.push(`${counts.files} file${counts.files > 1 ? 's' : ''}`);
-    const detail = parts.length > 0 ? ` This will also delete ${parts.join(' and ')}.` : '';
+    if (counts.folders > 0)
+      parts.push(`${counts.folders} subfolder${counts.folders > 1 ? 's' : ''}`);
+    if (counts.files > 0)
+      parts.push(`${counts.files} file${counts.files > 1 ? 's' : ''}`);
+    const detail =
+      parts.length > 0 ? ` This will also delete ${parts.join(' and ')}.` : '';
     setDeleteDesc(`Are you sure you want to delete "${folder.name}"?${detail}`);
     setDeleteOpen(true);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOver(true);
+  };
+
+  const handleDragLeave = () => setDragOver(false);
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOver(false);
+    const fileId = e.dataTransfer.getData('text/file-id');
+    if (fileId && onDropFile) {
+      onDropFile(fileId, folder.id);
+    }
   };
 
   return (
     <div>
       <div
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
         className={cn(
           'group flex w-full items-center rounded-lg transition-colors',
-          isActive ? 'bg-primary/15 text-primary font-medium' : 'text-foreground/80 hover:bg-white/5 hover:text-foreground'
+          isActive
+            ? 'bg-primary/15 text-primary font-medium'
+            : 'text-foreground/80 hover:bg-white/5 hover:text-foreground',
+          dragOver && 'bg-primary/20 ring-1 ring-primary/40'
         )}
       >
         <button
@@ -103,7 +144,10 @@ function TreeNode({
           style={{ paddingLeft: `${depth * 16 + 8}px` }}
         >
           <span
-            className={cn('shrink-0 transition-transform', hasChildren && expanded && 'rotate-90')}
+            className={cn(
+              'shrink-0 transition-transform duration-150',
+              hasChildren && expanded && 'rotate-90'
+            )}
             onClick={(e) => {
               e.stopPropagation();
               if (hasChildren) setExpanded((v) => !v);
@@ -116,53 +160,34 @@ function TreeNode({
             )}
           </span>
           <FolderIcon size={14} className="shrink-0 text-amber-400/80" />
-          <span className="truncate">
-            {isRoot ? 'Root' : folder.name}
-          </span>
+          <span className="truncate">{isRoot ? 'Root' : folder.name}</span>
         </button>
 
-        {/* Three-dot menu — hidden for root folder */}
         {!isRoot && (
-          <div className="relative shrink-0 pr-1">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setMenuOpen((v) => !v);
-              }}
-              className="rounded-md p-0.5 text-muted opacity-0 group-hover:opacity-100 hover:bg-white/10 hover:text-foreground transition-all"
-            >
-              <MoreVertical size={14} />
-            </button>
-
-            {menuOpen && (
-              <>
-                <div className="fixed inset-0 z-10" onClick={(e) => { e.stopPropagation(); setMenuOpen(false); }} />
-                <div className="absolute right-0 top-full z-20 mt-1 w-36 rounded-xl shadow-xl overflow-hidden bg-[#1e1e2e] border border-white/10">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setMenuOpen(false);
-                      setRenameOpen(true);
-                    }}
-                    className="flex w-full items-center gap-2 px-3 py-2.5 text-sm text-foreground hover:bg-white/10 transition-colors"
-                  >
-                    <Pencil size={14} />
-                    Rename
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteClick();
-                    }}
-                    className="flex w-full items-center gap-2 px-3 py-2.5 text-sm text-destructive hover:bg-white/10 transition-colors"
-                  >
-                    <Trash2 size={14} />
-                    Delete
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                onClick={(e) => e.stopPropagation()}
+                className="shrink-0 mr-1 rounded-md p-0.5 text-muted opacity-0 group-hover:opacity-100 hover:bg-white/10 hover:text-foreground transition-all"
+              >
+                <MoreVertical size={14} />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+              <DropdownMenuItem onClick={() => setRenameOpen(true)}>
+                <Pencil size={14} />
+                Rename
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={handleDeleteClick}
+                className="text-destructive focus:text-destructive"
+              >
+                <Trash2 size={14} />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         )}
       </div>
 
@@ -179,11 +204,11 @@ function TreeNode({
               onRename={onRename}
               onDelete={onDelete}
               getDescendantCounts={getDescendantCounts}
+              onDropFile={onDropFile}
               depth={depth + 1}
             />
           ))}
 
-      {/* Rename Dialog */}
       <RenameDialog
         open={renameOpen}
         title="Rename Folder"
@@ -195,7 +220,6 @@ function TreeNode({
         onCancel={() => setRenameOpen(false)}
       />
 
-      {/* Delete Confirm Dialog */}
       <ConfirmDialog
         open={deleteOpen}
         title="Delete Folder"

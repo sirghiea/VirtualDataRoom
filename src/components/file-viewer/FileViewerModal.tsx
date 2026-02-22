@@ -10,7 +10,10 @@ import {
   ZoomOut,
   Maximize2,
 } from 'lucide-react';
+import { motion } from 'framer-motion';
 import type { FileEntry } from '@/types';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   'pdfjs-dist/build/pdf.worker.min.mjs',
@@ -50,7 +53,9 @@ export default function FileViewerModal({ file, getBlob, onClose }: FileViewerMo
         if (!cancelled) setLoading(false);
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [file.blobKey, getBlob]);
 
   const handleKeyDown = useCallback(
@@ -73,14 +78,15 @@ export default function FileViewerModal({ file, getBlob, onClose }: FileViewerMo
 
   const zoomIn = () => setScale((s) => Math.min(s + 0.25, 3));
   const zoomOut = () => setScale((s) => Math.max(s - 0.25, 0.5));
-  const fitWidth = () => {
-    if (containerRef.current) {
-      setScale(1.0);
-    }
-  };
+  const fitWidth = () => setScale(1.0);
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-black/90 backdrop-blur-sm animate-[fadeIn_0.15s_ease-out]">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex flex-col bg-black/90 backdrop-blur-sm"
+    >
       {/* Toolbar */}
       <div className="glass-strong flex h-12 items-center justify-between px-4 text-foreground">
         <span className="text-sm font-medium truncate max-w-xs">
@@ -88,44 +94,48 @@ export default function FileViewerModal({ file, getBlob, onClose }: FileViewerMo
         </span>
 
         <div className="flex items-center gap-1">
-          <button onClick={zoomOut} className="rounded-lg p-1.5 hover:bg-white/10 transition-colors" title="Zoom out">
-            <ZoomOut size={18} />
-          </button>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={zoomOut} title="Zoom out">
+            <ZoomOut size={16} />
+          </Button>
           <span className="min-w-[4rem] text-center text-xs text-muted">
             {Math.round(scale * 100)}%
           </span>
-          <button onClick={zoomIn} className="rounded-lg p-1.5 hover:bg-white/10 transition-colors" title="Zoom in">
-            <ZoomIn size={18} />
-          </button>
-          <button onClick={fitWidth} className="rounded-lg p-1.5 hover:bg-white/10 transition-colors" title="Fit width">
-            <Maximize2 size={18} />
-          </button>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={zoomIn} title="Zoom in">
+            <ZoomIn size={16} />
+          </Button>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={fitWidth} title="Fit width">
+            <Maximize2 size={16} />
+          </Button>
 
-          <div className="mx-2 h-5 w-px bg-white/10" />
+          <Separator orientation="vertical" className="mx-2 h-5" />
 
-          <button
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
             onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
             disabled={currentPage <= 1}
-            className="rounded-lg p-1.5 hover:bg-white/10 disabled:opacity-30 transition-colors"
           >
-            <ChevronLeft size={18} />
-          </button>
+            <ChevronLeft size={16} />
+          </Button>
           <span className="min-w-[5rem] text-center text-xs text-muted">
             {currentPage} / {numPages}
           </span>
-          <button
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
             onClick={() => setCurrentPage((p) => Math.min(numPages, p + 1))}
             disabled={currentPage >= numPages}
-            className="rounded-lg p-1.5 hover:bg-white/10 disabled:opacity-30 transition-colors"
           >
-            <ChevronRight size={18} />
-          </button>
+            <ChevronRight size={16} />
+          </Button>
 
-          <div className="mx-2 h-5 w-px bg-white/10" />
+          <Separator orientation="vertical" className="mx-2 h-5" />
 
-          <button onClick={onClose} className="rounded-lg p-1.5 hover:bg-white/10 transition-colors" title="Close">
-            <X size={18} />
-          </button>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onClose} title="Close">
+            <X size={16} />
+          </Button>
         </div>
       </div>
 
@@ -160,6 +170,6 @@ export default function FileViewerModal({ file, getBlob, onClose }: FileViewerMo
           </Document>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 }

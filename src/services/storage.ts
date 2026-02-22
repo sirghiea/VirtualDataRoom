@@ -73,6 +73,11 @@ export async function getDataRoom(id: string): Promise<DataRoom | undefined> {
   return db.get('datarooms', id);
 }
 
+export async function getDataRoomByName(name: string): Promise<DataRoom | undefined> {
+  const db = await getDb();
+  return db.getFromIndex('datarooms', 'name', name);
+}
+
 export async function createDataRoom(name: string): Promise<DataRoom> {
   const db = await getDb();
   const now = new Date().toISOString();
@@ -355,4 +360,52 @@ export async function deleteFile(id: string): Promise<void> {
     tx.objectStore('blobs').delete(file.blobKey),
     tx.done,
   ]);
+}
+
+export async function moveFile(fileId: string, targetFolderId: string): Promise<FileEntry> {
+  const db = await getDb();
+  const existing = await db.get('files', fileId);
+  if (!existing) throw new Error('File not found');
+
+  const updated: FileEntry = {
+    ...existing,
+    folderId: targetFolderId,
+    updatedAt: new Date().toISOString(),
+  };
+  await db.put('files', updated);
+  return updated;
+}
+
+export async function moveFolder(folderId: string, targetParentId: string): Promise<Folder> {
+  const db = await getDb();
+  const existing = await db.get('folders', folderId);
+  if (!existing) throw new Error('Folder not found');
+
+  const updated: Folder = {
+    ...existing,
+    parentId: targetParentId,
+    updatedAt: new Date().toISOString(),
+  };
+  await db.put('folders', updated);
+  return updated;
+}
+
+export async function searchInDataRoom(
+  dataRoomId: string,
+  query: string
+): Promise<{ folders: Folder[]; files: FileEntry[] }> {
+  const db = await getDb();
+  const lowerQuery = query.toLowerCase();
+
+  const allFolders = await db.getAllFromIndex('folders', 'dataRoomId', dataRoomId);
+  const allFiles = await db.getAllFromIndex('files', 'dataRoomId', dataRoomId);
+
+  const matchedFolders = allFolders.filter(
+    (f) => f.parentId !== null && f.name.toLowerCase().includes(lowerQuery)
+  );
+  const matchedFiles = allFiles.filter(
+    (f) => `${f.name}.${f.extension}`.toLowerCase().includes(lowerQuery)
+  );
+
+  return { folders: matchedFolders, files: matchedFiles };
 }

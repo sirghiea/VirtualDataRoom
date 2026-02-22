@@ -1,24 +1,45 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Database } from 'lucide-react';
-import { useApp } from '@/context/AppContext';
+import { toast } from 'sonner';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { fetchDataRooms, createDataRoom, renameDataRoom, deleteDataRoom } from '@/store/slices/dataRoomsSlice';
 import DataRoomCard from '@/components/dataroom/DataRoomCard';
 import CreateDataRoomDialog from '@/components/dataroom/CreateDataRoomDialog';
 import EmptyState from '@/components/shared/EmptyState';
+import { Button } from '@/components/ui/button';
 
 export default function HomePage() {
-  const { state, loadDataRooms, createDataRoom, renameDataRoom, removeDataRoom } = useApp();
-  const [createOpen, setCreateOpen] = useState(false);
+  const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const { rooms, status } = useAppSelector((s) => s.dataRooms);
+  const [createOpen, setCreateOpen] = useState(false);
 
   useEffect(() => {
-    loadDataRooms();
-  }, [loadDataRooms]);
+    dispatch(fetchDataRooms());
+  }, [dispatch]);
 
   const handleCreate = async (name: string) => {
-    const room = await createDataRoom(name);
-    setCreateOpen(false);
-    navigate(`/dataroom/${room.id}`);
+    const result = await dispatch(createDataRoom(name));
+    if (createDataRoom.fulfilled.match(result)) {
+      setCreateOpen(false);
+      toast.success(`Data room "${name}" created`);
+      navigate(`/dataroom/${result.payload.id}`);
+    } else if (createDataRoom.rejected.match(result)) {
+      toast.error(result.payload as string);
+    }
+  };
+
+  const handleRename = async (id: string, name: string) => {
+    const result = await dispatch(renameDataRoom({ id, name }));
+    if (renameDataRoom.rejected.match(result)) {
+      toast.error(result.payload as string);
+    }
+  };
+
+  const handleDelete = (id: string) => {
+    dispatch(deleteDataRoom(id));
+    toast.success('Data room deleted');
   };
 
   return (
@@ -26,46 +47,49 @@ export default function HomePage() {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold text-foreground tracking-tight">Data Rooms</h1>
-          <p className="text-sm text-muted mt-1">
-            Manage your secure document repositories
-          </p>
+          <p className="text-sm text-muted mt-1">Manage your secure document repositories</p>
         </div>
-        <button
-          onClick={() => setCreateOpen(true)}
-          className="flex items-center gap-2 rounded-lg bg-primary/90 px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary transition-all shadow-lg shadow-primary/20"
-        >
+        <Button onClick={() => setCreateOpen(true)}>
           <Plus size={16} />
           New Data Room
-        </button>
+        </Button>
       </div>
 
-      {state.isLoading ? (
-        <div className="flex justify-center py-20">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      {status === 'loading' ? (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="glass rounded-xl p-5 animate-pulse">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-white/10" />
+                <div className="flex-1">
+                  <div className="h-4 w-32 rounded bg-white/10" />
+                  <div className="h-3 w-24 rounded bg-white/5 mt-2" />
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
-      ) : state.dataRooms.length === 0 ? (
+      ) : rooms.length === 0 ? (
         <EmptyState
           icon={<Database size={48} />}
           title="No data rooms yet"
           description="Create your first data room to start organizing and sharing documents securely."
           action={
-            <button
-              onClick={() => setCreateOpen(true)}
-              className="flex items-center gap-2 rounded-lg bg-primary/90 px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary transition-all shadow-lg shadow-primary/20"
-            >
+            <Button onClick={() => setCreateOpen(true)}>
               <Plus size={16} />
               Create Data Room
-            </button>
+            </Button>
           }
         />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {state.dataRooms.map((room) => (
+          {rooms.map((room, i) => (
             <DataRoomCard
               key={room.id}
               dataRoom={room}
-              onRename={renameDataRoom}
-              onDelete={removeDataRoom}
+              onRename={handleRename}
+              onDelete={handleDelete}
+              index={i}
             />
           ))}
         </div>
