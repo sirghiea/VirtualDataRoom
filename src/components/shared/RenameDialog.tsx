@@ -33,12 +33,14 @@ export default function RenameDialog({
 }: RenameDialogProps) {
   const [name, setName] = useState(currentName);
   const [error, setError] = useState('');
+  const [showError, setShowError] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleOpenChange = (isOpen: boolean) => {
     if (isOpen) {
       setName(currentName);
       setError('');
+      setShowError(false);
       setTimeout(() => inputRef.current?.select(), 100);
     } else {
       onCancel();
@@ -60,11 +62,19 @@ export default function RenameDialog({
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setName(val);
-    // Validate on every keystroke
+    setShowError(false);
+    // Validate silently (for button disable state) but don't show error
     if (val.length > 0) {
       runValidation(val);
     } else {
       setError('');
+    }
+  };
+
+  const handleBlur = () => {
+    if (name.trim().length > 0) {
+      runValidation(name);
+      setShowError(true);
     }
   };
 
@@ -77,6 +87,8 @@ export default function RenameDialog({
     }
     if (runValidation(trimmed)) {
       onSave(trimmed);
+    } else {
+      setShowError(true);
     }
   };
 
@@ -95,12 +107,13 @@ export default function RenameDialog({
               ref={inputRef}
               value={name}
               onChange={handleChange}
+              onBlur={handleBlur}
               maxLength={255}
               autoFocus
-              className={error ? 'border-destructive/50 focus-visible:ring-destructive/40' : ''}
+              className={error && showError ? 'border-destructive/50 focus-visible:ring-destructive/40' : ''}
             />
             <div className="flex items-center justify-between mt-2 min-h-[20px]">
-              {error ? (
+              {error && showError ? (
                 <p className="text-xs text-destructive">{error}</p>
               ) : (
                 <p className="text-[11px] text-muted/50">&nbsp;</p>
