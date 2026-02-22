@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { FolderOpen } from 'lucide-react';
+import { FolderOpen, Search } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
 import type { Folder, FileEntry } from '@/types';
 import FolderCard from './FolderCard';
@@ -101,12 +101,21 @@ export default function ContentArea({
     return (
       <EmptyState
         icon={
-          <div className="relative">
-            <div className="absolute inset-0 bg-primary/8 rounded-full blur-xl scale-150" />
-            <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-white/[0.06] to-white/[0.02] ring-1 ring-white/[0.08]">
-              <FolderOpen size={28} className="text-muted/50" />
+          searchQuery ? (
+            <div className="relative">
+              <div className="absolute inset-0 bg-primary/10 rounded-full blur-xl scale-150" />
+              <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/15 to-primary/5 ring-1 ring-primary/10">
+                <Search size={28} className="text-primary/50" />
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="relative">
+              <div className="absolute inset-0 bg-primary/8 rounded-full blur-xl scale-150" />
+              <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-white/[0.06] to-white/[0.02] ring-1 ring-white/[0.08]">
+                <FolderOpen size={28} className="text-muted/40" />
+              </div>
+            </div>
+          )
         }
         title={searchQuery ? 'No results found' : 'This folder is empty'}
         description={
@@ -122,7 +131,7 @@ export default function ContentArea({
     return (
       <div className="space-y-0.5">
         {/* List header */}
-        <div className="flex items-center gap-3 px-3 py-2 text-[11px] font-semibold text-muted/60 uppercase tracking-widest mb-1">
+        <div className="flex items-center gap-3 px-3 py-2 text-[10px] font-semibold text-muted/50 uppercase tracking-[0.15em] mb-1">
           <span className="w-8" />
           <span className="flex-1">Name</span>
           <span className="w-20">Type</span>
@@ -161,7 +170,7 @@ export default function ContentArea({
   }
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+    <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       <AnimatePresence mode="popLayout">
         {childFolders.map((folder, i) => (
           <FolderCard

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Database, Shield } from 'lucide-react';
+import { Plus, Database, Shield, Lock } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
@@ -44,61 +44,88 @@ export default function HomePage() {
   };
 
   return (
-    <div className="mx-auto max-w-6xl px-5 py-12 lg:px-8">
+    <div className="mx-auto max-w-6xl px-5 py-14 lg:px-8 relative">
+      {/* Background orbs */}
+      <div className="orb w-96 h-96 -top-48 -left-48 bg-primary/[0.04]" />
+      <div className="orb w-64 h-64 -top-20 right-0 bg-blue-500/[0.03]" style={{ animationDelay: '-7s' }} />
+
       {/* Hero */}
       <motion.div
-        initial={{ opacity: 0, y: 16 }}
+        initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
-        className="mb-10"
+        transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
+        className="mb-12 relative"
       >
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-foreground tracking-tight">
-              Data Rooms
-            </h1>
-            <p className="text-sm text-muted mt-2 max-w-md leading-relaxed">
+            <motion.h1
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="text-4xl font-bold tracking-tight"
+            >
+              <span className="text-gradient">Data Rooms</span>
+            </motion.h1>
+            <motion.p
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="text-sm text-muted/80 mt-3 max-w-lg leading-relaxed"
+            >
               Manage your secure document repositories. Create, organize, and share files with confidence.
-            </p>
+            </motion.p>
           </div>
-          <Button
-            onClick={() => setCreateOpen(true)}
-            className="shrink-0 shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-shadow"
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4, delay: 0.3 }}
           >
-            <Plus size={16} />
-            New Data Room
-          </Button>
+            <Button
+              onClick={() => setCreateOpen(true)}
+              className="shrink-0"
+            >
+              <Plus size={16} />
+              New Data Room
+            </Button>
+          </motion.div>
         </div>
 
-        {/* Stats */}
+        {/* Stats bar */}
         {rooms.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.15 }}
-            className="flex items-center gap-4 mt-5"
+            transition={{ duration: 0.4, delay: 0.25 }}
+            className="flex items-center gap-3 mt-6"
           >
             <div className="stat-chip">
               <Database size={12} className="text-primary" />
               <span>{rooms.length} room{rooms.length !== 1 ? 's' : ''}</span>
+            </div>
+            <div className="stat-chip">
+              <Lock size={10} className="text-primary" />
+              <span>Encrypted</span>
             </div>
           </motion.div>
         )}
       </motion.div>
 
       {/* Gradient divider */}
-      <div className="divider-gradient mb-8" />
+      <div className="divider-gradient mb-10" />
 
       {status === 'loading' ? (
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="rounded-2xl p-6 card-premium">
+            <div key={i} className="rounded-2xl p-6 card-premium inner-glow-purple">
               <div className="flex items-start gap-4">
-                <div className="h-12 w-12 rounded-xl skeleton" />
+                <div className="h-14 w-14 rounded-xl skeleton" />
                 <div className="flex-1 space-y-3 pt-1">
                   <div className="h-4 w-36 skeleton" />
                   <div className="h-3 w-24 skeleton" />
                 </div>
+              </div>
+              <div className="mt-5 pt-3 border-t border-white/[0.04]">
+                <div className="h-3 w-20 skeleton ml-auto" />
               </div>
             </div>
           ))}
@@ -107,19 +134,16 @@ export default function HomePage() {
         <EmptyState
           icon={
             <div className="relative">
-              <div className="absolute inset-0 bg-primary/10 rounded-full blur-2xl scale-150" />
-              <div className="relative flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 ring-1 ring-primary/10">
-                <Shield size={36} className="text-primary/60" />
+              <div className="absolute inset-0 bg-primary/15 rounded-full blur-3xl scale-[2]" />
+              <div className="relative flex h-24 w-24 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/25 to-primary/5 ring-1 ring-primary/15 inner-glow-purple">
+                <Shield size={40} className="text-primary/70" />
               </div>
             </div>
           }
           title="No data rooms yet"
           description="Create your first data room to start organizing and sharing documents securely."
           action={
-            <Button
-              onClick={() => setCreateOpen(true)}
-              className="shadow-lg shadow-primary/20"
-            >
+            <Button onClick={() => setCreateOpen(true)}>
               <Plus size={16} />
               Create Your First Data Room
             </Button>
@@ -130,7 +154,7 @@ export default function HomePage() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.3 }}
-          className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
+          className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
         >
           {rooms.map((room, i) => (
             <DataRoomCard

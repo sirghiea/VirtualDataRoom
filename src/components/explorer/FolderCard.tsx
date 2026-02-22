@@ -56,7 +56,7 @@ export default function FolderCard({
         <Button
           variant="ghost"
           size="icon"
-          className="h-7 w-7 text-muted opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+          className="h-7 w-7 text-muted opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-white/[0.08]"
           onClick={(e) => e.stopPropagation()}
         >
           <MoreVertical size={14} />
@@ -93,7 +93,7 @@ export default function FolderCard({
           onClick={() => onOpen(folder.id)}
           className="list-row group flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5"
         >
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-400/10">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-amber-400/15 to-amber-400/5 ring-1 ring-amber-400/10">
             <FolderIcon size={15} className="text-amber-400" />
           </div>
           <span className="flex-1 text-sm font-medium text-foreground truncate">
@@ -134,19 +134,28 @@ export default function FolderCard({
   return (
     <>
       <motion.div
-        initial={{ opacity: 0, y: 12 }}
+        initial={{ opacity: 0, y: 14 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, delay: index * 0.04, ease: [0.25, 0.46, 0.45, 0.94] }}
+        transition={{ duration: 0.35, delay: index * 0.05, ease: [0.25, 0.46, 0.45, 0.94] }}
         onClick={() => onOpen(folder.id)}
-        className="card-premium group relative flex cursor-pointer flex-col rounded-2xl p-4 overflow-hidden"
+        className="card-premium inner-glow-amber group relative flex cursor-pointer flex-col rounded-2xl p-5 overflow-hidden"
       >
+        {/* Dot pattern */}
+        <div className="absolute inset-0 dot-pattern opacity-30" />
+
         {/* Hover gradient */}
-        <div className="absolute inset-0 bg-gradient-to-br from-amber-400/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+        <div className="absolute inset-0 bg-gradient-to-br from-amber-400/[0.04] via-transparent to-orange-400/[0.02] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+        {/* Top highlight */}
+        <div className="absolute top-0 left-4 right-4 h-[1px] bg-gradient-to-r from-transparent via-amber-400/15 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
         <div className="relative flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400/15 to-amber-400/5 ring-1 ring-amber-400/10 group-hover:ring-amber-400/25 transition-all duration-300 group-hover:shadow-md group-hover:shadow-amber-400/10">
-              <FolderIcon size={20} className="text-amber-400" />
+            <div className="relative">
+              <div className="absolute inset-0 bg-amber-400/15 rounded-xl blur-lg opacity-0 group-hover:opacity-60 transition-opacity duration-500" />
+              <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400/20 to-amber-400/5 ring-1 ring-amber-400/15 group-hover:ring-amber-400/30 transition-all duration-400 group-hover:shadow-lg group-hover:shadow-amber-400/10">
+                <FolderIcon size={22} className="text-amber-400 group-hover:scale-110 transition-transform duration-300" />
+              </div>
             </div>
             <div className="min-w-0">
               <span
@@ -155,7 +164,7 @@ export default function FolderCard({
               >
                 {folder.name}
               </span>
-              <span className="text-[11px] text-muted mt-0.5 block">
+              <span className="text-[11px] text-muted/70 mt-1 block">
                 {formatDate(folder.createdAt)}
               </span>
             </div>
@@ -164,8 +173,9 @@ export default function FolderCard({
         </div>
 
         {/* Bottom accent */}
-        <div className="relative flex items-center justify-end mt-3 pt-2.5 border-t border-white/[0.03]">
-          <ChevronRight size={14} className="text-muted/50 group-hover:text-amber-400/60 group-hover:translate-x-0.5 transition-all duration-200" />
+        <div className="relative flex items-center justify-between mt-4 pt-3 border-t border-white/[0.04]">
+          <span className="text-[10px] text-muted/50 font-medium uppercase tracking-wider">Folder</span>
+          <ChevronRight size={15} className="text-muted/40 group-hover:text-amber-400/70 group-hover:translate-x-1 transition-all duration-300" />
         </div>
       </motion.div>
 

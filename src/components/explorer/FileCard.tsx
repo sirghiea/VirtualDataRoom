@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FileText, MoreVertical, Pencil, Trash2, Eye } from 'lucide-react';
+import { FileText, MoreVertical, Pencil, Trash2, Eye, Download } from 'lucide-react';
 import { motion } from 'framer-motion';
 import type { FileEntry } from '@/types';
 import { formatBytes, formatDate } from '@/lib/utils';
@@ -43,7 +43,7 @@ export default function FileCard({
         <Button
           variant="ghost"
           size="icon"
-          className="h-7 w-7 text-muted opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+          className="h-7 w-7 text-muted opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-white/[0.08]"
           onClick={(e) => e.stopPropagation()}
         >
           <MoreVertical size={14} />
@@ -80,13 +80,13 @@ export default function FileCard({
           onClick={() => onView(file)}
           className="list-row group flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5"
         >
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-rose-400/10">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-rose-400/15 to-rose-400/5 ring-1 ring-rose-400/10">
             <FileText size={15} className="text-rose-400" />
           </div>
           <span className="flex-1 text-sm text-foreground truncate" title={displayName}>
             {displayName}
           </span>
-          <span className="text-[11px] text-muted shrink-0 w-20 uppercase font-medium">
+          <span className="text-[11px] text-muted shrink-0 w-20 uppercase font-medium tracking-wide">
             {file.extension}
           </span>
           <span className="text-[11px] text-muted shrink-0 w-24 text-right tabular-nums">
@@ -125,53 +125,76 @@ export default function FileCard({
   return (
     <>
       <motion.div
-        initial={{ opacity: 0, y: 12 }}
+        initial={{ opacity: 0, y: 14 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, delay: index * 0.04, ease: [0.25, 0.46, 0.45, 0.94] }}
+        transition={{ duration: 0.35, delay: index * 0.05, ease: [0.25, 0.46, 0.45, 0.94] }}
         onClick={() => onView(file)}
         draggable
         onDragStart={(e) => {
           (e as unknown as React.DragEvent).dataTransfer?.setData('text/file-id', file.id);
         }}
-        className="card-premium group relative flex cursor-pointer flex-col rounded-2xl p-4 overflow-hidden"
+        className="card-premium inner-glow-rose group relative flex cursor-pointer flex-col rounded-2xl overflow-hidden"
       >
-        {/* Hover gradient */}
-        <div className="absolute inset-0 bg-gradient-to-br from-rose-400/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+        {/* File preview zone - taller visual area */}
+        <div className="relative h-28 bg-gradient-to-b from-rose-400/[0.04] to-transparent flex items-center justify-center overflow-hidden">
+          {/* Dot pattern */}
+          <div className="absolute inset-0 dot-pattern opacity-30" />
 
-        <div className="relative flex items-start justify-between">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-rose-400/15 to-rose-400/5 ring-1 ring-rose-400/10 group-hover:ring-rose-400/25 transition-all duration-300 group-hover:shadow-md group-hover:shadow-rose-400/10">
-              <FileText size={20} className="text-rose-400" />
+          {/* Decorative page lines */}
+          <div className="absolute inset-x-6 top-5 space-y-2 opacity-[0.06]">
+            <div className="h-[2px] w-full bg-white rounded" />
+            <div className="h-[2px] w-4/5 bg-white rounded" />
+            <div className="h-[2px] w-full bg-white rounded" />
+            <div className="h-[2px] w-3/5 bg-white rounded" />
+            <div className="h-[2px] w-full bg-white rounded" />
+          </div>
+
+          {/* Central icon */}
+          <div className="relative">
+            <div className="absolute inset-0 bg-rose-400/15 rounded-xl blur-xl opacity-0 group-hover:opacity-80 transition-opacity duration-500" />
+            <div className="relative flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-rose-400/20 to-rose-400/5 ring-1 ring-rose-400/15 group-hover:ring-rose-400/30 transition-all duration-400 group-hover:shadow-lg group-hover:shadow-rose-400/15">
+              <FileText size={26} className="text-rose-400 group-hover:scale-110 transition-transform duration-300" />
             </div>
-            <div className="min-w-0">
+          </div>
+
+          {/* Extension badge - top right */}
+          <div className="absolute top-3 right-3">
+            <Badge variant="secondary" className="text-[9px] px-1.5 py-0 font-bold tracking-widest uppercase bg-rose-400/10 text-rose-300/90 border-rose-400/15">
+              {file.extension}
+            </Badge>
+          </div>
+
+          {/* View overlay on hover */}
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
+            <div className="flex items-center gap-2 text-white/90 text-sm font-medium">
+              <Eye size={16} />
+              Preview
+            </div>
+          </div>
+        </div>
+
+        {/* Content area */}
+        <div className="relative p-4 pt-3">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0 flex-1">
               <span
                 className="text-sm font-semibold text-foreground truncate block group-hover:text-white transition-colors duration-200"
                 title={displayName}
               >
                 {file.name}
               </span>
-              <div className="flex items-center gap-2 mt-1">
-                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 font-semibold tracking-wide">
-                  {file.extension.toUpperCase()}
-                </Badge>
-                <span className="text-[11px] text-muted tabular-nums">
+              <div className="flex items-center gap-3 mt-1.5">
+                <span className="flex items-center gap-1 text-[11px] text-muted/70 tabular-nums">
+                  <Download size={10} />
                   {formatBytes(file.size)}
+                </span>
+                <span className="text-[11px] text-muted/50">
+                  {formatDate(file.createdAt)}
                 </span>
               </div>
             </div>
+            <div className="shrink-0 -mt-0.5">{menu}</div>
           </div>
-          <div className="shrink-0">{menu}</div>
-        </div>
-
-        {/* Bottom meta */}
-        <div className="relative flex items-center justify-between mt-3 pt-2.5 border-t border-white/[0.03]">
-          <span className="text-[11px] text-muted/70">
-            {formatDate(file.createdAt)}
-          </span>
-          <span className="flex items-center gap-1 text-[11px] text-muted opacity-0 group-hover:opacity-100 group-hover:text-rose-400/70 transition-all duration-200">
-            <Eye size={12} />
-            Preview
-          </span>
         </div>
       </motion.div>
 

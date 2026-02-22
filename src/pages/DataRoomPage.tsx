@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { PanelLeftClose, PanelLeft, Upload, FolderUp } from 'lucide-react';
+import { PanelLeftClose, PanelLeft, Upload, FolderUp, Database } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
@@ -138,9 +138,12 @@ export default function DataRoomPage() {
   if (isLoading && !currentDataRoom) {
     return (
       <div className="flex h-[calc(100vh-3.75rem)] items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-          <span className="text-xs text-muted">Loading data room...</span>
+        <div className="flex flex-col items-center gap-4">
+          <div className="relative">
+            <div className="h-10 w-10 animate-spin rounded-full border-2 border-primary/30 border-t-primary" />
+            <div className="absolute inset-0 rounded-full bg-primary/10 blur-xl animate-pulse" />
+          </div>
+          <span className="text-xs text-muted/80 font-medium tracking-wide">Loading data room...</span>
         </div>
       </div>
     );
@@ -149,11 +152,14 @@ export default function DataRoomPage() {
   if (!currentDataRoom) {
     return (
       <div className="flex h-[calc(100vh-3.75rem)] items-center justify-center">
-        <div className="flex flex-col items-center gap-3 text-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/5 ring-1 ring-white/10">
-            <FolderUp size={24} className="text-muted" />
+        <div className="flex flex-col items-center gap-4 text-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/[0.03] ring-1 ring-white/[0.08]">
+            <FolderUp size={28} className="text-muted/60" />
           </div>
-          <p className="text-muted">Data room not found.</p>
+          <div>
+            <p className="text-foreground font-medium">Data room not found</p>
+            <p className="text-sm text-muted/70 mt-1">It may have been deleted or the link is invalid.</p>
+          </div>
           <Button variant="outline" size="sm" onClick={() => navigate('/')}>
             Back to Home
           </Button>
@@ -174,26 +180,39 @@ export default function DataRoomPage() {
         {sidebarOpen && (
           <motion.aside
             initial={{ width: 0, opacity: 0 }}
-            animate={{ width: 260, opacity: 1 }}
+            animate={{ width: 272, opacity: 1 }}
             exit={{ width: 0, opacity: 0 }}
             transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
-            className="hidden md:flex shrink-0 flex-col border-r border-white/[0.04] bg-white/[0.015] overflow-hidden"
+            className="hidden md:flex shrink-0 flex-col border-r border-white/[0.04] bg-white/[0.01] overflow-hidden"
           >
-            <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.04]">
-              <span className="text-[11px] font-semibold uppercase tracking-widest text-muted/80">
+            {/* Sidebar header with data room name */}
+            <div className="px-4 pt-4 pb-3 border-b border-white/[0.04]">
+              <div className="flex items-center gap-2.5 mb-3">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 ring-1 ring-primary/15">
+                  <Database size={14} className="text-primary" />
+                </div>
+                <span className="text-sm font-semibold text-foreground truncate">
+                  {currentDataRoom.name}
+                </span>
+              </div>
+              <div className="divider-gradient" />
+            </div>
+
+            <div className="flex items-center justify-between px-4 py-2.5">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-muted/60">
                 Folders
               </span>
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7 text-muted hover:text-foreground"
+                className="h-6 w-6 text-muted/50 hover:text-foreground"
                 onClick={() => dispatch(setSidebarOpen(false))}
               >
-                <PanelLeftClose size={15} />
+                <PanelLeftClose size={14} />
               </Button>
             </div>
             <ScrollArea className="flex-1">
-              <div className="p-2">
+              <div className="px-2 pb-2">
                 <FolderTree
                   folders={folders}
                   currentFolderId={currentFolderId}
@@ -278,17 +297,21 @@ export default function DataRoomPage() {
             className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md pointer-events-none"
           >
             <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
+              initial={{ scale: 0.85, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="flex flex-col items-center gap-4"
+              exit={{ scale: 0.85, opacity: 0 }}
+              transition={{ type: 'spring', damping: 20, stiffness: 300 }}
+              className="flex flex-col items-center gap-5"
             >
-              <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-primary/15 ring-2 ring-primary/30 shadow-xl shadow-primary/20">
-                <Upload size={36} className="text-primary" />
+              <div className="relative">
+                <div className="absolute inset-0 bg-primary/20 rounded-3xl blur-2xl scale-150 animate-pulse" />
+                <div className="relative flex h-24 w-24 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 ring-2 ring-primary/30 shadow-2xl shadow-primary/20">
+                  <Upload size={40} className="text-primary" />
+                </div>
               </div>
               <div className="text-center">
-                <p className="text-lg font-semibold text-foreground">Drop PDF files to upload</p>
-                <p className="text-sm text-muted mt-1">Files will be added to the current folder</p>
+                <p className="text-lg font-bold text-foreground">Drop PDF files to upload</p>
+                <p className="text-sm text-muted/70 mt-1.5">Files will be added to the current folder</p>
               </div>
             </motion.div>
           </motion.div>
