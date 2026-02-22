@@ -119,6 +119,23 @@ export async function updateDataRoom(id: string, name: string): Promise<DataRoom
   return updated;
 }
 
+export async function setDataRoomPassword(
+  id: string,
+  passwordHash: string | null,
+): Promise<DataRoom> {
+  const db = await getDb();
+  const existing = await db.get('datarooms', id);
+  if (!existing) throw new Error('Data room not found');
+
+  const updated: DataRoom = {
+    ...existing,
+    passwordHash,
+    updatedAt: new Date().toISOString(),
+  };
+  await db.put('datarooms', updated);
+  return updated;
+}
+
 export async function deleteDataRoom(id: string): Promise<void> {
   const db = await getDb();
 

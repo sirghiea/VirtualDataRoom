@@ -1,15 +1,18 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
 import type { DataRoom } from '@/types';
 import * as storage from '@/services/storage';
 
 interface DataRoomsState {
   rooms: DataRoom[];
   status: 'idle' | 'loading' | 'error';
+  /** Room IDs whose password has been verified this session (memory-only). */
+  unlockedRoomIds: string[];
 }
 
 const initialState: DataRoomsState = {
   rooms: [],
   status: 'idle',
+  unlockedRoomIds: [],
 };
 
 export const fetchDataRooms = createAsyncThunk('dataRooms/fetchAll', async () => {
@@ -43,10 +46,26 @@ export const deleteDataRoom = createAsyncThunk('dataRooms/delete', async (id: st
   return id;
 });
 
+export const setRoomPassword = createAsyncThunk(
+  'dataRooms/setPassword',
+  async ({ id, passwordHash }: { id: string; passwordHash: string | null }) => {
+    return storage.setDataRoomPassword(id, passwordHash);
+  }
+);
+
 const dataRoomsSlice = createSlice({
   name: 'dataRooms',
   initialState,
-  reducers: {},
+  reducers: {
+    unlockRoom(state, action: PayloadAction<string>) {
+      if (!state.unlockedRoomIds.includes(action.payload)) {
+        state.unlockedRoomIds.push(action.payload);
+      }
+    },
+    lockRoom(state, action: PayloadAction<string>) {
+      state.unlockedRoomIds = state.unlockedRoomIds.filter((id) => id !== action.payload);
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchDataRooms.pending, (state) => {
@@ -68,8 +87,14 @@ const dataRoomsSlice = createSlice({
       })
       .addCase(deleteDataRoom.fulfilled, (state, action) => {
         state.rooms = state.rooms.filter((r) => r.id !== action.payload);
+        state.unlockedRoomIds = state.unlockedRoomIds.filter((id) => id !== action.payload);
+      })
+      .addCase(setRoomPassword.fulfilled, (state, action) => {
+        const idx = state.rooms.findIndex((r) => r.id === action.payload.id);
+        if (idx !== -1) state.rooms[idx] = action.payload;
       });
   },
 });
 
+export const { unlockRoom, lockRoom } = dataRoomsSlice.actions;
 export default dataRoomsSlice.reducer;

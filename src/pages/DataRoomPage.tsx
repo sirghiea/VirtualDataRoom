@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { PanelLeftClose, PanelLeft, Upload, FolderUp, Database } from 'lucide-react';
+import { PanelLeftClose, PanelLeft, Upload, FolderUp, Database, Lock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
@@ -16,7 +16,9 @@ import {
   setViewingFile,
   moveFile,
 } from '@/store/slices/explorerSlice';
+import { unlockRoom } from '@/store/slices/dataRoomsSlice';
 import { setSidebarOpen } from '@/store/slices/uiSlice';
+import { verifyPassword } from '@/lib/crypto';
 import * as storage from '@/services/storage';
 import Breadcrumb from '@/components/explorer/Breadcrumb';
 import Toolbar from '@/components/explorer/Toolbar';
@@ -24,6 +26,7 @@ import ContentArea from '@/components/explorer/ContentArea';
 import FolderTree from '@/components/explorer/FolderTree';
 import FileViewerModal from '@/components/file-viewer/FileViewerModal';
 import RenameDialog from '@/components/shared/RenameDialog';
+import PasswordDialog from '@/components/dataroom/PasswordDialog';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
@@ -35,9 +38,11 @@ export default function DataRoomPage() {
   const { currentDataRoom, folders, currentFolderId, currentFiles, breadcrumb, viewingFile, isLoading } =
     useAppSelector((s) => s.explorer);
   const sidebarOpen = useAppSelector((s) => s.ui.sidebarOpen);
+  const unlockedRoomIds = useAppSelector((s) => s.dataRooms.unlockedRoomIds);
 
   const [newFolderOpen, setNewFolderOpen] = useState(false);
   const [fileDragOver, setFileDragOver] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
 
   // Sibling folder names for validation
   const siblingFolderNames = useMemo(
@@ -45,11 +50,26 @@ export default function DataRoomPage() {
     [folders, currentFolderId]
   );
 
+  // Is the room locked?
+  const isRoomLocked =
+    !!currentDataRoom?.passwordHash && !unlockedRoomIds.includes(currentDataRoom.id);
+
   useEffect(() => {
     if (id) {
       dispatch(openDataRoom(id)).unwrap().catch(() => navigate('/'));
     }
   }, [id, dispatch, navigate]);
+
+  const handlePasswordUnlock = async (password: string) => {
+    if (!currentDataRoom?.passwordHash) return;
+    const valid = await verifyPassword(password, currentDataRoom.passwordHash);
+    if (valid) {
+      dispatch(unlockRoom(currentDataRoom.id));
+      setPasswordError('');
+    } else {
+      setPasswordError('Incorrect password');
+    }
+  };
 
   const handleNewFolder = () => setNewFolderOpen(true);
 
@@ -141,6 +161,7 @@ export default function DataRoomPage() {
     }
   };
 
+  // Loading state
   if (isLoading && !currentDataRoom) {
     return (
       <div className="flex h-[calc(100vh-3.75rem)] items-center justify-center">
@@ -155,6 +176,7 @@ export default function DataRoomPage() {
     );
   }
 
+  // Not found
   if (!currentDataRoom) {
     return (
       <div className="flex h-[calc(100vh-3.75rem)] items-center justify-center">
@@ -170,6 +192,39 @@ export default function DataRoomPage() {
             Back to Home
           </Button>
         </div>
+      </div>
+    );
+  }
+
+  // Password gate — blocks content until room is unlocked
+  if (isRoomLocked) {
+    return (
+      <div className="flex h-[calc(100vh-3.75rem)] items-center justify-center">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.3 }}
+          className="flex flex-col items-center gap-5 text-center"
+        >
+          <div className="relative">
+            <div className="absolute inset-0 bg-amber-400/10 rounded-full blur-3xl scale-[2]" />
+            <div className="relative flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400/15 to-amber-400/5 ring-1 ring-amber-400/20">
+              <Lock size={32} className="text-amber-400/80" />
+            </div>
+          </div>
+          <div>
+            <p className="text-lg font-semibold text-foreground">{currentDataRoom.name}</p>
+            <p className="text-sm text-muted/70 mt-1">This data room is password protected</p>
+          </div>
+        </motion.div>
+
+        <PasswordDialog
+          open={true}
+          mode="unlock"
+          onSubmit={handlePasswordUnlock}
+          onCancel={() => navigate('/')}
+          error={passwordError}
+        />
       </div>
     );
   }

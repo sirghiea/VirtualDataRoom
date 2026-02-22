@@ -102,10 +102,12 @@ export default function HomePage() {
               <Database size={12} className="text-primary" />
               <span>{rooms.length} room{rooms.length !== 1 ? 's' : ''}</span>
             </div>
-            <div className="stat-chip">
-              <Lock size={10} className="text-primary" />
-              <span>Encrypted</span>
-            </div>
+            {rooms.filter((r) => r.passwordHash).length > 0 && (
+              <div className="stat-chip">
+                <Lock size={10} className="text-amber-400" />
+                <span>{rooms.filter((r) => r.passwordHash).length} protected</span>
+              </div>
+            )}
           </motion.div>
         )}
       </motion.div>

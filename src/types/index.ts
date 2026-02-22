@@ -4,6 +4,8 @@ export interface DataRoom {
   createdAt: string;
   updatedAt: string;
   rootFolderId: string;
+  /** SHA-256 hash of the room password. null/undefined = no password protection. */
+  passwordHash?: string | null;
 }
 
 export interface Folder {
