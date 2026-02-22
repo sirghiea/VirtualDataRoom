@@ -137,9 +137,29 @@ export default function PasswordDialog({
     else if (field === 'newPassword') setNewPassword(value);
     else if (field === 'confirm') setConfirmPassword(value);
 
+    // Confirm field: show feedback live (both match and mismatch)
+    if (field === 'confirm') {
+      const err = validateField(field, value);
+      setErrors((prev) => ({ ...prev, [field]: err }));
+      setShowErrors((prev) => ({ ...prev, [field]: value.length > 0 }));
+      return;
+    }
+
+    // Also re-validate confirm field when password/newPassword changes
     setShowErrors((prev) => ({ ...prev, [field]: false }));
     const err = validateField(field, value);
     setErrors((prev) => ({ ...prev, [field]: err }));
+
+    if (confirmPassword) {
+      const target = (mode === 'change' && field === 'newPassword') || (mode === 'set' && field === 'password')
+        ? value : (mode === 'change' ? newPassword : password);
+      const confirmErr = !confirmPassword
+        ? 'Please confirm your password'
+        : confirmPassword !== target
+          ? 'Passwords do not match'
+          : '';
+      setErrors((prev) => ({ ...prev, confirm: confirmErr }));
+    }
   };
 
   const handleFieldBlur = (field: string, value: string) => {
@@ -219,36 +239,55 @@ export default function PasswordDialog({
     toggleShow: () => void,
     placeholder: string,
     ref?: React.RefObject<HTMLInputElement | null>,
-  ) => (
-    <div>
-      <label className="text-xs font-medium text-muted/80 mb-1.5 block">{label}</label>
-      <div className="relative">
-        <Input
-          ref={ref}
-          type={show ? 'text' : 'password'}
-          value={value}
-          onChange={(e) => handleFieldChange(field, e.target.value)}
-          onBlur={() => handleFieldBlur(field, value)}
-          placeholder={placeholder}
-          autoComplete="off"
-          className={`pr-10 ${displayedErrors[field] && displayedShowErrors[field] ? 'border-destructive/50 focus-visible:ring-destructive/40' : ''}`}
-        />
-        <button
-          type="button"
-          tabIndex={-1}
-          onClick={toggleShow}
-          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted/50 hover:text-muted transition-colors"
-        >
-          {show ? <EyeOff size={15} /> : <Eye size={15} />}
-        </button>
+  ) => {
+    const hasError = displayedErrors[field] && displayedShowErrors[field];
+    const isConfirmMatch = field === 'confirm' && value.length > 0 && !displayedErrors[field];
+
+    return (
+      <div>
+        <label className="text-xs font-medium text-muted/80 mb-1.5 block">{label}</label>
+        <div className="relative">
+          <Input
+            ref={ref}
+            type={show ? 'text' : 'password'}
+            value={value}
+            onChange={(e) => handleFieldChange(field, e.target.value)}
+            onBlur={() => handleFieldBlur(field, value)}
+            placeholder={placeholder}
+            autoComplete="off"
+            className={`pr-10 ${
+              hasError
+                ? 'border-destructive/50 focus-visible:ring-destructive/40'
+                : isConfirmMatch
+                  ? 'border-emerald-400/40 focus-visible:ring-emerald-400/30'
+                  : ''
+            }`}
+          />
+          <button
+            type="button"
+            tabIndex={-1}
+            onClick={toggleShow}
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted/50 hover:text-muted transition-colors"
+          >
+            {show ? <EyeOff size={15} /> : <Eye size={15} />}
+          </button>
+        </div>
+        <div className="min-h-[18px] mt-1">
+          {hasError ? (
+            <p className="text-xs text-destructive flex items-center gap-1">
+              {field === 'confirm' && <X size={11} className="shrink-0" />}
+              {displayedErrors[field]}
+            </p>
+          ) : isConfirmMatch ? (
+            <p className="text-xs text-emerald-400 flex items-center gap-1">
+              <Check size={11} className="shrink-0" />
+              Passwords match
+            </p>
+          ) : null}
+        </div>
       </div>
-      <div className="min-h-[18px] mt-1">
-        {displayedErrors[field] && displayedShowErrors[field] ? (
-          <p className="text-xs text-destructive">{displayedErrors[field]}</p>
-        ) : null}
-      </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
