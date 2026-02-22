@@ -10,6 +10,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useAppSelector } from '@/store/hooks';
+import { validateName } from '@/lib/validation';
 
 interface CreateDataRoomDialogProps {
   open: boolean;
@@ -27,6 +28,8 @@ export default function CreateDataRoomDialog({
   const inputRef = useRef<HTMLInputElement>(null);
   const existingRooms = useAppSelector((s) => s.dataRooms.rooms);
 
+  const existingNames = existingRooms.map((r) => r.name);
+
   const handleOpenChange = (isOpen: boolean) => {
     if (isOpen) {
       setName('');
@@ -37,24 +40,39 @@ export default function CreateDataRoomDialog({
     }
   };
 
-  const validate = (value: string) => {
-    const trimmed = value.trim();
-    if (existingRooms.some((r) => r.name.toLowerCase() === trimmed.toLowerCase())) {
-      setError('A data room with this name already exists');
-      return false;
+  const runValidation = (value: string) => {
+    const result = validateName(value, {
+      entityLabel: 'Data room name',
+      existingNames,
+      minLength: 2,
+      maxLength: 255,
+    });
+    setError(result.error);
+    return result.valid;
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setName(val);
+    // Validate on every keystroke as soon as user starts typing
+    if (val.length > 0) {
+      runValidation(val);
+    } else {
+      setError('');
     }
-    setError('');
-    return true;
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = name.trim();
-    if (trimmed && validate(trimmed)) {
+    if (runValidation(trimmed)) {
       onSubmit(trimmed);
       setName('');
     }
   };
+
+  const charCount = name.trim().length;
+  const isValid = !error && charCount >= 2;
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -64,24 +82,32 @@ export default function CreateDataRoomDialog({
           <DialogDescription>Enter a name for your new data room.</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
-          <Input
-            ref={inputRef}
-            value={name}
-            onChange={(e) => {
-              setName(e.target.value);
-              if (error) validate(e.target.value);
-            }}
-            placeholder="e.g., Project Alpha Due Diligence"
-            maxLength={255}
-            className="mt-2"
-            autoFocus
-          />
-          {error && <p className="mt-2 text-xs text-destructive">{error}</p>}
-          <DialogFooter className="mt-6">
+          <div className="mt-2">
+            <Input
+              ref={inputRef}
+              value={name}
+              onChange={handleChange}
+              placeholder="e.g., Project Alpha Due Diligence"
+              maxLength={255}
+              autoFocus
+              className={error ? 'border-destructive/50 focus-visible:ring-destructive/40' : ''}
+            />
+            <div className="flex items-center justify-between mt-2 min-h-[20px]">
+              {error ? (
+                <p className="text-xs text-destructive">{error}</p>
+              ) : (
+                <p className="text-[11px] text-muted/50">&nbsp;</p>
+              )}
+              <span className={`text-[10px] tabular-nums ${charCount > 240 ? 'text-amber-400' : 'text-muted/40'}`}>
+                {charCount > 0 ? `${charCount}/255` : ''}
+              </span>
+            </div>
+          </div>
+          <DialogFooter className="mt-4">
             <Button type="button" variant="outline" onClick={onCancel}>
               Cancel
             </Button>
-            <Button type="submit" disabled={!name.trim() || !!error}>
+            <Button type="submit" disabled={!isValid}>
               Create
             </Button>
           </DialogFooter>

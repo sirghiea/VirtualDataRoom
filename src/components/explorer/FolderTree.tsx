@@ -86,6 +86,8 @@ function TreeNode({
   const [dragOver, setDragOver] = useState(false);
 
   const children = folders.filter((f) => f.parentId === folder.id);
+  const siblings = folders.filter((f) => f.parentId === folder.parentId);
+  const siblingNames = siblings.map((f) => f.name);
   const hasChildren = children.length > 0;
   const isActive = folder.id === currentFolderId;
   const isRoot = folder.parentId === null;
@@ -217,6 +219,8 @@ function TreeNode({
         open={renameOpen}
         title="Rename Folder"
         currentName={folder.name}
+        existingNames={siblingNames}
+        entityLabel="Folder name"
         onSave={(name) => {
           onRename(folder.id, name);
           setRenameOpen(false);

@@ -16,7 +16,7 @@ export default function Header() {
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-[shimmer_3s_ease-in-out_infinite]" style={{ backgroundSize: '200% 100%' }} />
       </div>
 
-      <div className="glass-strong flex h-14 items-center justify-between px-5 lg:px-8">
+      <div className="flex h-14 items-center justify-between px-5 lg:px-8 bg-[#08080e]/95 backdrop-blur-xl">
         <Link to="/" className="flex items-center gap-3.5 group">
           {/* Logo with layered glow */}
           <div className="relative">

@@ -22,6 +22,7 @@ interface FolderCardProps {
   getDescendantCounts: (id: string) => Promise<{ folders: number; files: number }>;
   viewMode: 'grid' | 'list';
   index?: number;
+  siblingNames?: string[];
 }
 
 export default function FolderCard({
@@ -32,6 +33,7 @@ export default function FolderCard({
   getDescendantCounts,
   viewMode,
   index = 0,
+  siblingNames = [],
 }: FolderCardProps) {
   const [renameOpen, setRenameOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -111,6 +113,8 @@ export default function FolderCard({
           open={renameOpen}
           title="Rename Folder"
           currentName={folder.name}
+          existingNames={siblingNames}
+          entityLabel="Folder name"
           onSave={(name) => {
             onRename(folder.id, name);
             setRenameOpen(false);

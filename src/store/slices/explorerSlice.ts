@@ -57,7 +57,7 @@ export const createFolder = createAsyncThunk(
     if (!currentDataRoom || !currentFolderId) return rejectWithValue('No folder context');
 
     const siblings = folders.filter((f) => f.parentId === currentFolderId);
-    if (siblings.some((f) => f.name === name)) {
+    if (siblings.some((f) => f.name.toLowerCase() === name.toLowerCase())) {
       return rejectWithValue('A folder with this name already exists');
     }
 

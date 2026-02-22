@@ -77,6 +77,13 @@ export default function ContentArea({
 }: ContentAreaProps) {
   const { viewMode, sortBy, sortDirection, searchQuery } = useAppSelector((s) => s.ui);
 
+  // All sibling folder names for validation (unfiltered by search)
+  const siblingFolderNames = useMemo(() => {
+    return folders
+      .filter((f) => f.parentId === currentFolderId)
+      .map((f) => f.name);
+  }, [folders, currentFolderId]);
+
   const childFolders = useMemo(() => {
     let filtered = folders.filter((f) => f.parentId === currentFolderId);
     if (searchQuery.trim()) {
@@ -149,6 +156,7 @@ export default function ContentArea({
               onRename={onRenameFolder}
               onDelete={onDeleteFolder}
               getDescendantCounts={getDescendantCounts}
+              siblingNames={siblingFolderNames}
               viewMode="list"
               index={i}
             />
@@ -180,6 +188,7 @@ export default function ContentArea({
             onRename={onRenameFolder}
             onDelete={onDeleteFolder}
             getDescendantCounts={getDescendantCounts}
+            siblingNames={siblingFolderNames}
             viewMode="grid"
             index={i}
           />

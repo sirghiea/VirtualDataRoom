@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { PanelLeftClose, PanelLeft, Upload, FolderUp, Database } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -38,6 +38,12 @@ export default function DataRoomPage() {
 
   const [newFolderOpen, setNewFolderOpen] = useState(false);
   const [fileDragOver, setFileDragOver] = useState(false);
+
+  // Sibling folder names for validation
+  const siblingFolderNames = useMemo(
+    () => folders.filter((f) => f.parentId === currentFolderId).map((f) => f.name),
+    [folders, currentFolderId]
+  );
 
   useEffect(() => {
     if (id) {
@@ -274,6 +280,8 @@ export default function DataRoomPage() {
         open={newFolderOpen}
         title="New Folder"
         currentName=""
+        existingNames={siblingFolderNames}
+        entityLabel="Folder name"
         onSave={handleCreateFolder}
         onCancel={() => setNewFolderOpen(false)}
       />

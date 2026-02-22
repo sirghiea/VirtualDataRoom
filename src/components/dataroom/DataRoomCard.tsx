@@ -12,6 +12,7 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
+import { useAppSelector } from '@/store/hooks';
 import RenameDialog from '@/components/shared/RenameDialog';
 import ConfirmDialog from '@/components/shared/ConfirmDialog';
 
@@ -26,6 +27,7 @@ export default function DataRoomCard({ dataRoom, onRename, onDelete, index = 0 }
   const navigate = useNavigate();
   const [renameOpen, setRenameOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const existingNames = useAppSelector((s) => s.dataRooms.rooms.map((r) => r.name));
 
   return (
     <>
@@ -126,6 +128,8 @@ export default function DataRoomCard({ dataRoom, onRename, onDelete, index = 0 }
         open={renameOpen}
         title="Rename Data Room"
         currentName={dataRoom.name}
+        existingNames={existingNames}
+        entityLabel="Data room name"
         onSave={(name) => {
           onRename(dataRoom.id, name);
           setRenameOpen(false);
