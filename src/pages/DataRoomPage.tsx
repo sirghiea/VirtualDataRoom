@@ -149,7 +149,9 @@ export default function DataRoomPage() {
     setFileDragOver(false);
     const fileList = Array.from(e.dataTransfer.files);
     if (fileList.length > 0) {
-      const pdfs = fileList.filter((f) => f.type === 'application/pdf');
+      const pdfs = fileList.filter(
+        (f) => f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf'),
+      );
       if (pdfs.length === 0) {
         toast.error('Only PDF files are supported');
         return;

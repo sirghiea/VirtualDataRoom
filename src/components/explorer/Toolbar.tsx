@@ -57,7 +57,10 @@ export default function Toolbar({ onNewFolder, onUploadFiles }: ToolbarProps) {
 
     const validFiles: File[] = [];
     for (const file of Array.from(fileList)) {
-      if (file.type !== 'application/pdf') {
+      const isPdf =
+        file.type === 'application/pdf' ||
+        file.name.toLowerCase().endsWith('.pdf');
+      if (!isPdf) {
         toast.error(`"${file.name}" is not a PDF file`);
         continue;
       }
