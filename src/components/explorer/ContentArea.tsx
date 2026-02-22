@@ -100,7 +100,14 @@ export default function ContentArea({
   if (childFolders.length === 0 && sortedFiles.length === 0) {
     return (
       <EmptyState
-        icon={<FolderOpen size={48} />}
+        icon={
+          <div className="relative">
+            <div className="absolute inset-0 bg-primary/8 rounded-full blur-xl scale-150" />
+            <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-white/[0.06] to-white/[0.02] ring-1 ring-white/[0.08]">
+              <FolderOpen size={28} className="text-muted/50" />
+            </div>
+          </div>
+        }
         title={searchQuery ? 'No results found' : 'This folder is empty'}
         description={
           searchQuery
@@ -115,14 +122,15 @@ export default function ContentArea({
     return (
       <div className="space-y-0.5">
         {/* List header */}
-        <div className="flex items-center gap-3 px-3 py-1.5 text-xs font-medium text-muted uppercase tracking-wider border-b border-white/5 mb-1">
-          <span className="w-4" />
+        <div className="flex items-center gap-3 px-3 py-2 text-[11px] font-semibold text-muted/60 uppercase tracking-widest mb-1">
+          <span className="w-8" />
           <span className="flex-1">Name</span>
           <span className="w-20">Type</span>
           <span className="w-24 text-right">Size</span>
           <span className="w-28">Created</span>
           <span className="w-7" />
         </div>
+        <div className="divider-gradient mb-2" />
         <AnimatePresence mode="popLayout">
           {childFolders.map((folder, i) => (
             <FolderCard
@@ -153,7 +161,7 @@ export default function ContentArea({
   }
 
   return (
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       <AnimatePresence mode="popLayout">
         {childFolders.map((folder, i) => (
           <FolderCard

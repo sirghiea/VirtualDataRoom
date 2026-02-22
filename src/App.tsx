@@ -13,7 +13,7 @@ export default function App() {
     <Provider store={store}>
       <BrowserRouter>
         <TooltipProvider delayDuration={300}>
-          <div className="min-h-screen">
+          <div className="min-h-screen noise">
             <Header />
             <Routes>
               <Route path="/" element={<HomePage />} />
@@ -26,9 +26,11 @@ export default function App() {
             position="bottom-right"
             toastOptions={{
               style: {
-                background: '#1e1e2e',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
+                background: '#111118',
+                border: '1px solid rgba(255, 255, 255, 0.06)',
                 color: '#e2e8f0',
+                boxShadow: '0 8px 32px -8px rgba(0, 0, 0, 0.5)',
+                borderRadius: '12px',
               },
             }}
           />

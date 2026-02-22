@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Folder as FolderIcon, MoreVertical, Pencil, Trash2, FolderOpen } from 'lucide-react';
+import { Folder as FolderIcon, MoreVertical, Pencil, Trash2, FolderOpen, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import type { Folder } from '@/types';
 import { formatDate } from '@/lib/utils';
@@ -56,7 +56,7 @@ export default function FolderCard({
         <Button
           variant="ghost"
           size="icon"
-          className="h-7 w-7 text-muted opacity-0 group-hover:opacity-100"
+          className="h-7 w-7 text-muted opacity-0 group-hover:opacity-100 transition-opacity duration-200"
           onClick={(e) => e.stopPropagation()}
         >
           <MoreVertical size={14} />
@@ -87,19 +87,21 @@ export default function FolderCard({
     return (
       <>
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.15, delay: index * 0.02 }}
+          initial={{ opacity: 0, x: -4 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.2, delay: index * 0.02 }}
           onClick={() => onOpen(folder.id)}
-          className="group flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 transition-all hover:bg-white/5"
+          className="list-row group flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5"
         >
-          <FolderIcon size={16} className="shrink-0 text-amber-400" />
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-400/10">
+            <FolderIcon size={15} className="text-amber-400" />
+          </div>
           <span className="flex-1 text-sm font-medium text-foreground truncate">
             {folder.name}
           </span>
-          <span className="text-xs text-muted shrink-0 w-20">Folder</span>
-          <span className="text-xs text-muted shrink-0 w-24">&mdash;</span>
-          <span className="text-xs text-muted shrink-0 w-28">
+          <span className="text-[11px] text-muted shrink-0 w-20">Folder</span>
+          <span className="text-[11px] text-muted shrink-0 w-24">&mdash;</span>
+          <span className="text-[11px] text-muted shrink-0 w-28">
             {formatDate(folder.createdAt)}
           </span>
           <div className="shrink-0">{menu}</div>
@@ -132,22 +134,39 @@ export default function FolderCard({
   return (
     <>
       <motion.div
-        initial={{ opacity: 0, y: 8 }}
+        initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.2, delay: index * 0.03 }}
+        transition={{ duration: 0.3, delay: index * 0.04, ease: [0.25, 0.46, 0.45, 0.94] }}
         onClick={() => onOpen(folder.id)}
-        className="glass group relative flex cursor-pointer items-center gap-3 rounded-xl p-3 transition-all hover:bg-glass-hover hover:border-primary/20 hover:-translate-y-0.5"
+        className="card-premium group relative flex cursor-pointer flex-col rounded-2xl p-4 overflow-hidden"
       >
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-400/10 text-amber-400">
-          <FolderIcon size={20} />
+        {/* Hover gradient */}
+        <div className="absolute inset-0 bg-gradient-to-br from-amber-400/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+        <div className="relative flex items-start justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400/15 to-amber-400/5 ring-1 ring-amber-400/10 group-hover:ring-amber-400/25 transition-all duration-300 group-hover:shadow-md group-hover:shadow-amber-400/10">
+              <FolderIcon size={20} className="text-amber-400" />
+            </div>
+            <div className="min-w-0">
+              <span
+                className="text-sm font-semibold text-foreground truncate block group-hover:text-white transition-colors duration-200"
+                title={folder.name}
+              >
+                {folder.name}
+              </span>
+              <span className="text-[11px] text-muted mt-0.5 block">
+                {formatDate(folder.createdAt)}
+              </span>
+            </div>
+          </div>
+          <div className="shrink-0">{menu}</div>
         </div>
-        <div className="flex-1 min-w-0">
-          <span className="text-sm font-medium text-foreground truncate block" title={folder.name}>
-            {folder.name}
-          </span>
-          <span className="text-xs text-muted">{formatDate(folder.createdAt)}</span>
+
+        {/* Bottom accent */}
+        <div className="relative flex items-center justify-end mt-3 pt-2.5 border-t border-white/[0.03]">
+          <ChevronRight size={14} className="text-muted/50 group-hover:text-amber-400/60 group-hover:translate-x-0.5 transition-all duration-200" />
         </div>
-        <div className="shrink-0">{menu}</div>
       </motion.div>
 
       <RenameDialog

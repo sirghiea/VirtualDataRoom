@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { PanelLeftClose, PanelLeft, Upload } from 'lucide-react';
+import { PanelLeftClose, PanelLeft, Upload, FolderUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
@@ -137,23 +137,34 @@ export default function DataRoomPage() {
 
   if (isLoading && !currentDataRoom) {
     return (
-      <div className="flex h-[calc(100vh-3.5rem)] items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      <div className="flex h-[calc(100vh-3.75rem)] items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          <span className="text-xs text-muted">Loading data room...</span>
+        </div>
       </div>
     );
   }
 
   if (!currentDataRoom) {
     return (
-      <div className="flex h-[calc(100vh-3.5rem)] items-center justify-center">
-        <p className="text-muted">Data room not found.</p>
+      <div className="flex h-[calc(100vh-3.75rem)] items-center justify-center">
+        <div className="flex flex-col items-center gap-3 text-center">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/5 ring-1 ring-white/10">
+            <FolderUp size={24} className="text-muted" />
+          </div>
+          <p className="text-muted">Data room not found.</p>
+          <Button variant="outline" size="sm" onClick={() => navigate('/')}>
+            Back to Home
+          </Button>
+        </div>
       </div>
     );
   }
 
   return (
     <div
-      className="flex h-[calc(100vh-3.5rem)] relative"
+      className="flex h-[calc(100vh-3.75rem)] relative"
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
@@ -163,22 +174,22 @@ export default function DataRoomPage() {
         {sidebarOpen && (
           <motion.aside
             initial={{ width: 0, opacity: 0 }}
-            animate={{ width: 240, opacity: 1 }}
+            animate={{ width: 260, opacity: 1 }}
             exit={{ width: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="hidden md:flex shrink-0 flex-col border-r border-white/5 bg-white/[0.02] overflow-hidden"
+            transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
+            className="hidden md:flex shrink-0 flex-col border-r border-white/[0.04] bg-white/[0.015] overflow-hidden"
           >
-            <div className="flex items-center justify-between border-b border-white/5 px-3 py-2.5">
-              <span className="text-xs font-semibold uppercase tracking-wider text-muted">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.04]">
+              <span className="text-[11px] font-semibold uppercase tracking-widest text-muted/80">
                 Folders
               </span>
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7"
+                className="h-7 w-7 text-muted hover:text-foreground"
                 onClick={() => dispatch(setSidebarOpen(false))}
               >
-                <PanelLeftClose size={16} />
+                <PanelLeftClose size={15} />
               </Button>
             </div>
             <ScrollArea className="flex-1">
@@ -202,16 +213,16 @@ export default function DataRoomPage() {
       {/* Main content */}
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Top bar */}
-        <div className="flex items-center justify-between border-b border-white/5 px-4 py-2.5 gap-3">
+        <div className="flex items-center justify-between border-b border-white/[0.04] px-5 py-2.5 gap-4 bg-white/[0.01]">
           <div className="flex items-center gap-3 min-w-0">
             {!sidebarOpen && (
               <Button
                 variant="ghost"
                 size="icon"
-                className="hidden md:flex h-7 w-7"
+                className="hidden md:flex h-7 w-7 text-muted hover:text-foreground"
                 onClick={() => dispatch(setSidebarOpen(true))}
               >
-                <PanelLeft size={16} />
+                <PanelLeft size={15} />
               </Button>
             )}
             <Breadcrumb
@@ -223,7 +234,7 @@ export default function DataRoomPage() {
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-4">
+        <div className="flex-1 overflow-y-auto p-5">
           <ContentArea
             folders={folders}
             files={currentFiles}
@@ -264,12 +275,22 @@ export default function DataRoomPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm pointer-events-none"
+            className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md pointer-events-none"
           >
-            <div className="flex flex-col items-center gap-3 text-primary">
-              <Upload size={48} />
-              <p className="text-lg font-medium text-foreground">Drop PDF files to upload</p>
-            </div>
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="flex flex-col items-center gap-4"
+            >
+              <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-primary/15 ring-2 ring-primary/30 shadow-xl shadow-primary/20">
+                <Upload size={36} className="text-primary" />
+              </div>
+              <div className="text-center">
+                <p className="text-lg font-semibold text-foreground">Drop PDF files to upload</p>
+                <p className="text-sm text-muted mt-1">Files will be added to the current folder</p>
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

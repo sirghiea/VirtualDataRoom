@@ -43,7 +43,7 @@ export default function FileCard({
         <Button
           variant="ghost"
           size="icon"
-          className="h-7 w-7 text-muted opacity-0 group-hover:opacity-100"
+          className="h-7 w-7 text-muted opacity-0 group-hover:opacity-100 transition-opacity duration-200"
           onClick={(e) => e.stopPropagation()}
         >
           <MoreVertical size={14} />
@@ -74,23 +74,25 @@ export default function FileCard({
     return (
       <>
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.15, delay: index * 0.02 }}
+          initial={{ opacity: 0, x: -4 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.2, delay: index * 0.02 }}
           onClick={() => onView(file)}
-          className="group flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 transition-all hover:bg-white/5"
+          className="list-row group flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5"
         >
-          <FileText size={16} className="shrink-0 text-rose-400" />
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-rose-400/10">
+            <FileText size={15} className="text-rose-400" />
+          </div>
           <span className="flex-1 text-sm text-foreground truncate" title={displayName}>
             {displayName}
           </span>
-          <span className="text-xs text-muted shrink-0 w-20 uppercase">
+          <span className="text-[11px] text-muted shrink-0 w-20 uppercase font-medium">
             {file.extension}
           </span>
-          <span className="text-xs text-muted shrink-0 w-24 text-right">
+          <span className="text-[11px] text-muted shrink-0 w-24 text-right tabular-nums">
             {formatBytes(file.size)}
           </span>
-          <span className="text-xs text-muted shrink-0 w-28">
+          <span className="text-[11px] text-muted shrink-0 w-28">
             {formatDate(file.createdAt)}
           </span>
           <div className="shrink-0">{menu}</div>
@@ -123,34 +125,54 @@ export default function FileCard({
   return (
     <>
       <motion.div
-        initial={{ opacity: 0, y: 8 }}
+        initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.2, delay: index * 0.03 }}
+        transition={{ duration: 0.3, delay: index * 0.04, ease: [0.25, 0.46, 0.45, 0.94] }}
         onClick={() => onView(file)}
-        className="glass group relative flex cursor-pointer items-center gap-3 rounded-xl p-3 transition-all hover:bg-glass-hover hover:border-primary/20 hover:-translate-y-0.5"
+        draggable
+        onDragStart={(e) => {
+          (e as unknown as React.DragEvent).dataTransfer?.setData('text/file-id', file.id);
+        }}
+        className="card-premium group relative flex cursor-pointer flex-col rounded-2xl p-4 overflow-hidden"
       >
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-400/10 text-rose-400">
-          <FileText size={20} />
-        </div>
-        <div className="flex-1 min-w-0">
-          <span
-            className="text-sm font-medium text-foreground truncate block"
-            title={displayName}
-          >
-            {displayName}
-          </span>
-          <div className="flex items-center gap-2 mt-0.5">
-            <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-              {file.extension.toUpperCase()}
-            </Badge>
-            <span className="text-xs text-muted">
-              {formatBytes(file.size)}
-            </span>
-            <span className="text-xs text-muted">&middot;</span>
-            <span className="text-xs text-muted">{formatDate(file.createdAt)}</span>
+        {/* Hover gradient */}
+        <div className="absolute inset-0 bg-gradient-to-br from-rose-400/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+        <div className="relative flex items-start justify-between">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-rose-400/15 to-rose-400/5 ring-1 ring-rose-400/10 group-hover:ring-rose-400/25 transition-all duration-300 group-hover:shadow-md group-hover:shadow-rose-400/10">
+              <FileText size={20} className="text-rose-400" />
+            </div>
+            <div className="min-w-0">
+              <span
+                className="text-sm font-semibold text-foreground truncate block group-hover:text-white transition-colors duration-200"
+                title={displayName}
+              >
+                {file.name}
+              </span>
+              <div className="flex items-center gap-2 mt-1">
+                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 font-semibold tracking-wide">
+                  {file.extension.toUpperCase()}
+                </Badge>
+                <span className="text-[11px] text-muted tabular-nums">
+                  {formatBytes(file.size)}
+                </span>
+              </div>
+            </div>
           </div>
+          <div className="shrink-0">{menu}</div>
         </div>
-        <div className="shrink-0">{menu}</div>
+
+        {/* Bottom meta */}
+        <div className="relative flex items-center justify-between mt-3 pt-2.5 border-t border-white/[0.03]">
+          <span className="text-[11px] text-muted/70">
+            {formatDate(file.createdAt)}
+          </span>
+          <span className="flex items-center gap-1 text-[11px] text-muted opacity-0 group-hover:opacity-100 group-hover:text-rose-400/70 transition-all duration-200">
+            <Eye size={12} />
+            Preview
+          </span>
+        </div>
       </motion.div>
 
       <RenameDialog

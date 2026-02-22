@@ -8,6 +8,7 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
+  X,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -80,73 +81,94 @@ export default function Toolbar({ onNewFolder, onUploadFiles }: ToolbarProps) {
     <div className="flex items-center gap-2 flex-wrap">
       {/* Search */}
       <div className="relative">
-        <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted" />
+        <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted/60" />
         <Input
           value={searchQuery}
           onChange={(e) => dispatch(setSearchQuery(e.target.value))}
           placeholder="Filter..."
-          className="h-8 w-40 pl-8 text-xs"
+          className="h-8 w-44 pl-8 pr-7 text-xs bg-white/[0.02] border-white/[0.06] focus:border-primary/30 focus:bg-white/[0.04] transition-colors"
         />
+        {searchQuery && (
+          <button
+            onClick={() => dispatch(setSearchQuery(''))}
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-muted/50 hover:text-foreground transition-colors"
+          >
+            <X size={12} />
+          </button>
+        )}
       </div>
 
       {/* Sort */}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs">
-            <ArrowUpDown size={14} />
-            <span className="hidden sm:inline">{sortLabels[sortBy]}</span>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuLabel>Sort by</DropdownMenuLabel>
-          {(Object.keys(sortLabels) as SortBy[]).map((key) => (
-            <DropdownMenuItem
-              key={key}
-              onClick={() => dispatch(setSortBy(key))}
-              className={sortBy === key ? 'bg-white/10' : ''}
-            >
-              {sortLabels[key]}
+      <div className="toolbar-group">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="flex items-center gap-1.5 text-xs text-muted hover:text-foreground px-2 py-1 rounded-md hover:bg-white/[0.06] transition-colors">
+              <ArrowUpDown size={13} />
+              <span className="hidden sm:inline">{sortLabels[sortBy]}</span>
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>Sort by</DropdownMenuLabel>
+            {(Object.keys(sortLabels) as SortBy[]).map((key) => (
+              <DropdownMenuItem
+                key={key}
+                onClick={() => dispatch(setSortBy(key))}
+                className={sortBy === key ? 'bg-primary/10 text-primary' : ''}
+              >
+                {sortLabels[key]}
+              </DropdownMenuItem>
+            ))}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => dispatch(toggleSortDirection())}>
+              {sortDirection === 'asc' ? (
+                <>
+                  <ArrowUp size={14} />
+                  Ascending
+                </>
+              ) : (
+                <>
+                  <ArrowDown size={14} />
+                  Descending
+                </>
+              )}
             </DropdownMenuItem>
-          ))}
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => dispatch(toggleSortDirection())}>
-            {sortDirection === 'asc' ? (
-              <>
-                <ArrowUp size={14} />
-                Ascending
-              </>
-            ) : (
-              <>
-                <ArrowDown size={14} />
-                Descending
-              </>
-            )}
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
 
       {/* View mode */}
-      <ToggleGroup
-        type="single"
-        value={viewMode}
-        onValueChange={(v) => v && dispatch(setViewMode(v as 'grid' | 'list'))}
-      >
-        <ToggleGroupItem value="grid" aria-label="Grid view">
-          <LayoutGrid size={14} />
-        </ToggleGroupItem>
-        <ToggleGroupItem value="list" aria-label="List view">
-          <List size={14} />
-        </ToggleGroupItem>
-      </ToggleGroup>
+      <div className="toolbar-group">
+        <ToggleGroup
+          type="single"
+          value={viewMode}
+          onValueChange={(v) => v && dispatch(setViewMode(v as 'grid' | 'list'))}
+        >
+          <ToggleGroupItem value="grid" aria-label="Grid view" className="h-7 w-7 p-0">
+            <LayoutGrid size={13} />
+          </ToggleGroupItem>
+          <ToggleGroupItem value="list" aria-label="List view" className="h-7 w-7 p-0">
+            <List size={13} />
+          </ToggleGroupItem>
+        </ToggleGroup>
+      </div>
 
-      <div className="h-5 w-px bg-white/10 hidden sm:block" />
+      <div className="h-5 w-[1px] bg-gradient-to-b from-transparent via-white/[0.08] to-transparent hidden sm:block mx-0.5" />
 
       {/* Actions */}
-      <Button variant="outline" size="sm" className="h-8" onClick={onNewFolder}>
+      <Button
+        variant="outline"
+        size="sm"
+        className="h-8 text-xs bg-white/[0.02] border-white/[0.06] hover:border-white/[0.12] hover:bg-white/[0.04]"
+        onClick={onNewFolder}
+      >
         <FolderPlus size={14} />
         <span className="hidden sm:inline">New Folder</span>
       </Button>
-      <Button size="sm" className="h-8" onClick={() => fileInputRef.current?.click()}>
+      <Button
+        size="sm"
+        className="h-8 text-xs shadow-md shadow-primary/15 hover:shadow-primary/25 transition-shadow"
+        onClick={() => fileInputRef.current?.click()}
+      >
         <Upload size={14} />
         <span className="hidden sm:inline">Upload PDF</span>
       </Button>

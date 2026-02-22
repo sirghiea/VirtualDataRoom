@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronRight, Folder as FolderIcon, MoreVertical, Pencil, Trash2 } from 'lucide-react';
+import { ChevronRight, Folder as FolderIcon, MoreVertical, Pencil, Trash2, Home } from 'lucide-react';
 import type { Folder } from '@/types';
 import { cn } from '@/lib/utils';
 import {
@@ -128,11 +128,11 @@ function TreeNode({
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         className={cn(
-          'group flex w-full items-center rounded-lg transition-colors',
+          'group flex w-full items-center rounded-lg transition-all duration-150',
           isActive
-            ? 'bg-primary/15 text-primary font-medium'
-            : 'text-foreground/80 hover:bg-white/5 hover:text-foreground',
-          dragOver && 'bg-primary/20 ring-1 ring-primary/40'
+            ? 'bg-primary/10 text-primary font-medium ring-1 ring-primary/15'
+            : 'text-foreground/80 hover:bg-white/[0.04] hover:text-foreground',
+          dragOver && 'bg-primary/15 ring-1 ring-primary/30'
         )}
       >
         <button
@@ -140,7 +140,7 @@ function TreeNode({
             onNavigate(folder.id);
             if (hasChildren) setExpanded(true);
           }}
-          className="flex flex-1 min-w-0 items-center gap-1.5 py-1.5 text-left"
+          className="flex flex-1 min-w-0 items-center gap-1.5 py-1.5 text-left text-[13px]"
           style={{ paddingLeft: `${depth * 16 + 8}px` }}
         >
           <span
@@ -154,12 +154,16 @@ function TreeNode({
             }}
           >
             {hasChildren ? (
-              <ChevronRight size={14} />
+              <ChevronRight size={13} className="text-muted/60" />
             ) : (
-              <span className="inline-block w-3.5" />
+              <span className="inline-block w-[13px]" />
             )}
           </span>
-          <FolderIcon size={14} className="shrink-0 text-amber-400/80" />
+          {isRoot ? (
+            <Home size={14} className="shrink-0 text-primary/70" />
+          ) : (
+            <FolderIcon size={14} className="shrink-0 text-amber-400/80" />
+          )}
           <span className="truncate">{isRoot ? 'Root' : folder.name}</span>
         </button>
 
@@ -168,9 +172,9 @@ function TreeNode({
             <DropdownMenuTrigger asChild>
               <button
                 onClick={(e) => e.stopPropagation()}
-                className="shrink-0 mr-1 rounded-md p-0.5 text-muted opacity-0 group-hover:opacity-100 hover:bg-white/10 hover:text-foreground transition-all"
+                className="shrink-0 mr-1.5 rounded-md p-0.5 text-muted opacity-0 group-hover:opacity-100 hover:bg-white/[0.08] hover:text-foreground transition-all duration-150"
               >
-                <MoreVertical size={14} />
+                <MoreVertical size={13} />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>

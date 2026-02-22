@@ -9,6 +9,7 @@ import {
   ZoomIn,
   ZoomOut,
   Maximize2,
+  FileText,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import type { FileEntry } from '@/types';
@@ -85,71 +86,92 @@ export default function FileViewerModal({ file, getBlob, onClose }: FileViewerMo
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex flex-col bg-black/90 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex flex-col bg-black/95 backdrop-blur-md"
     >
       {/* Toolbar */}
-      <div className="glass-strong flex h-12 items-center justify-between px-4 text-foreground">
-        <span className="text-sm font-medium truncate max-w-xs">
-          {file.name}.{file.extension}
-        </span>
+      <div className="flex h-13 items-center justify-between px-5 border-b border-white/[0.06] bg-white/[0.02]">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-400/10">
+            <FileText size={14} className="text-rose-400" />
+          </div>
+          <span className="text-sm font-medium text-foreground truncate max-w-xs">
+            {file.name}.{file.extension}
+          </span>
+        </div>
 
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={zoomOut} title="Zoom out">
-            <ZoomOut size={16} />
-          </Button>
-          <span className="min-w-[4rem] text-center text-xs text-muted">
-            {Math.round(scale * 100)}%
-          </span>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={zoomIn} title="Zoom in">
-            <ZoomIn size={16} />
-          </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={fitWidth} title="Fit width">
-            <Maximize2 size={16} />
-          </Button>
+          {/* Zoom */}
+          <div className="toolbar-group mr-1">
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={zoomOut} title="Zoom out">
+              <ZoomOut size={14} />
+            </Button>
+            <span className="min-w-[3.5rem] text-center text-[11px] text-muted tabular-nums">
+              {Math.round(scale * 100)}%
+            </span>
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={zoomIn} title="Zoom in">
+              <ZoomIn size={14} />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={fitWidth} title="Fit width">
+              <Maximize2 size={14} />
+            </Button>
+          </div>
 
-          <Separator orientation="vertical" className="mx-2 h-5" />
+          <Separator orientation="vertical" className="mx-1.5 h-5 bg-white/[0.06]" />
+
+          {/* Pagination */}
+          <div className="toolbar-group mr-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage <= 1}
+            >
+              <ChevronLeft size={14} />
+            </Button>
+            <span className="min-w-[4.5rem] text-center text-[11px] text-muted tabular-nums">
+              {currentPage} / {numPages}
+            </span>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={() => setCurrentPage((p) => Math.min(numPages, p + 1))}
+              disabled={currentPage >= numPages}
+            >
+              <ChevronRight size={14} />
+            </Button>
+          </div>
+
+          <Separator orientation="vertical" className="mx-1.5 h-5 bg-white/[0.06]" />
 
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8"
-            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-            disabled={currentPage <= 1}
+            className="h-8 w-8 text-muted hover:text-foreground"
+            onClick={onClose}
+            title="Close"
           >
-            <ChevronLeft size={16} />
-          </Button>
-          <span className="min-w-[5rem] text-center text-xs text-muted">
-            {currentPage} / {numPages}
-          </span>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={() => setCurrentPage((p) => Math.min(numPages, p + 1))}
-            disabled={currentPage >= numPages}
-          >
-            <ChevronRight size={16} />
-          </Button>
-
-          <Separator orientation="vertical" className="mx-2 h-5" />
-
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onClose} title="Close">
             <X size={16} />
           </Button>
         </div>
       </div>
 
       {/* Content */}
-      <div ref={containerRef} className="flex-1 overflow-auto flex justify-center p-4">
+      <div ref={containerRef} className="flex-1 overflow-auto flex justify-center p-6">
         {loading && (
-          <div className="flex items-center justify-center">
+          <div className="flex flex-col items-center justify-center gap-3">
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+            <span className="text-xs text-muted">Loading document...</span>
           </div>
         )}
 
         {error && (
-          <div className="flex items-center justify-center">
-            <p className="text-muted">{error}</p>
+          <div className="flex flex-col items-center justify-center gap-3">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/5 ring-1 ring-white/10">
+              <FileText size={24} className="text-muted/50" />
+            </div>
+            <p className="text-muted text-sm">{error}</p>
           </div>
         )}
 
@@ -165,7 +187,7 @@ export default function FileViewerModal({ file, getBlob, onClose }: FileViewerMo
               scale={scale}
               renderTextLayer
               renderAnnotationLayer
-              className="shadow-2xl rounded-lg overflow-hidden"
+              className="shadow-2xl shadow-black/50 rounded-lg overflow-hidden"
             />
           </Document>
         )}
