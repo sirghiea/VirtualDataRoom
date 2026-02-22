@@ -53,10 +53,14 @@ export default function Toolbar({ onNewFolder, onUploadFiles }: ToolbarProps) {
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const fileList = e.target.files;
     if (!fileList || fileList.length === 0) return;
+
+    // Copy file list before clearing the input — clearing can invalidate
+    // the File objects on some browsers.
+    const files = Array.from(fileList);
     e.target.value = '';
 
     const validFiles: File[] = [];
-    for (const file of Array.from(fileList)) {
+    for (const file of files) {
       const isPdf =
         file.type === 'application/pdf' ||
         file.name.toLowerCase().endsWith('.pdf');

@@ -7,7 +7,7 @@ import { store } from '@/store';
 import Header from '@/components/layout/Header';
 import HomePage from '@/pages/HomePage';
 import DataRoomPage from '@/pages/DataRoomPage';
-import CommandPalette from '@/components/layout/CommandPalette';
+
 
 /** Scroll to top on route change and on initial page load / refresh */
 function ScrollToTop() {
@@ -31,7 +31,6 @@ export default function App() {
               <Route path="/dataroom/:id" element={<DataRoomPage />} />
             </Routes>
           </div>
-          <CommandPalette />
           <Toaster
             theme="dark"
             position="bottom-right"
