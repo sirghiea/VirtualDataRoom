@@ -407,6 +407,18 @@ export async function moveFolder(folderId: string, targetParentId: string): Prom
   return updated;
 }
 
+export async function getRoomStats(
+  rooms: DataRoom[]
+): Promise<Record<string, { folders: number; files: number }>> {
+  const result: Record<string, { folders: number; files: number }> = {};
+  await Promise.all(
+    rooms.map(async (room) => {
+      result[room.id] = await getDescendantCounts(room.rootFolderId);
+    })
+  );
+  return result;
+}
+
 export async function searchInDataRoom(
   dataRoomId: string,
   query: string

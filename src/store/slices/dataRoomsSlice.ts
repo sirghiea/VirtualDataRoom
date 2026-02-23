@@ -7,17 +7,27 @@ interface DataRoomsState {
   status: 'idle' | 'loading' | 'error';
   /** Room IDs whose password has been verified this session (memory-only). */
   unlockedRoomIds: string[];
+  /** File/folder counts per room, keyed by room ID. */
+  roomStats: Record<string, { folders: number; files: number }>;
 }
 
 const initialState: DataRoomsState = {
   rooms: [],
   status: 'idle',
   unlockedRoomIds: [],
+  roomStats: {},
 };
 
 export const fetchDataRooms = createAsyncThunk('dataRooms/fetchAll', async () => {
   return storage.getAllDataRooms();
 });
+
+export const fetchRoomStats = createAsyncThunk(
+  'dataRooms/fetchStats',
+  async (rooms: DataRoom[]) => {
+    return storage.getRoomStats(rooms);
+  }
+);
 
 export const createDataRoom = createAsyncThunk(
   'dataRooms/create',
@@ -78,8 +88,12 @@ const dataRoomsSlice = createSlice({
       .addCase(fetchDataRooms.rejected, (state) => {
         state.status = 'error';
       })
+      .addCase(fetchRoomStats.fulfilled, (state, action) => {
+        state.roomStats = action.payload;
+      })
       .addCase(createDataRoom.fulfilled, (state, action) => {
         state.rooms.push(action.payload);
+        state.roomStats[action.payload.id] = { folders: 0, files: 0 };
       })
       .addCase(renameDataRoom.fulfilled, (state, action) => {
         const idx = state.rooms.findIndex((r) => r.id === action.payload.id);
@@ -88,6 +102,7 @@ const dataRoomsSlice = createSlice({
       .addCase(deleteDataRoom.fulfilled, (state, action) => {
         state.rooms = state.rooms.filter((r) => r.id !== action.payload);
         state.unlockedRoomIds = state.unlockedRoomIds.filter((id) => id !== action.payload);
+        delete state.roomStats[action.payload];
       })
       .addCase(setRoomPassword.fulfilled, (state, action) => {
         const idx = state.rooms.findIndex((r) => r.id === action.payload.id);

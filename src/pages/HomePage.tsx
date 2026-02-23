@@ -1,24 +1,48 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Database, Shield, Lock } from 'lucide-react';
+import { Database, Shield, Lock, FileText } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { fetchDataRooms, createDataRoom, renameDataRoom, deleteDataRoom } from '@/store/slices/dataRoomsSlice';
+import {
+  fetchDataRooms,
+  fetchRoomStats,
+  createDataRoom,
+  renameDataRoom,
+  deleteDataRoom,
+} from '@/store/slices/dataRoomsSlice';
+import { setHomeSearchQuery } from '@/store/slices/uiSlice';
 import DataRoomCard from '@/components/dataroom/DataRoomCard';
 import CreateDataRoomDialog from '@/components/dataroom/CreateDataRoomDialog';
+import HomeToolbar from '@/components/dataroom/HomeToolbar';
 import EmptyState from '@/components/shared/EmptyState';
 import { Button } from '@/components/ui/button';
+import { useFilteredRooms } from '@/hooks/useFilteredRooms';
+import { Plus } from 'lucide-react';
 
 export default function HomePage() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const { rooms, status } = useAppSelector((s) => s.dataRooms);
+  const { rooms, status, roomStats } = useAppSelector((s) => s.dataRooms);
+  const { homeSearchQuery, homeFilter } = useAppSelector((s) => s.ui);
   const [createOpen, setCreateOpen] = useState(false);
+  const filteredRooms = useFilteredRooms();
 
   useEffect(() => {
-    dispatch(fetchDataRooms());
+    dispatch(fetchDataRooms()).then((result) => {
+      if (fetchDataRooms.fulfilled.match(result)) {
+        dispatch(fetchRoomStats(result.payload));
+      }
+    });
   }, [dispatch]);
+
+  const protectedCount = rooms.filter((r) => r.passwordHash).length;
+  const totalFiles = Object.values(roomStats).reduce(
+    (sum, s) => sum + s.files,
+    0
+  );
+
+  const isFiltering = homeSearchQuery.trim() || homeFilter !== 'all';
 
   const handleCreate = async (name: string) => {
     const result = await dispatch(createDataRoom(name));
@@ -47,78 +71,131 @@ export default function HomePage() {
     <div className="mx-auto max-w-6xl px-5 py-14 lg:px-8 relative">
       {/* Background orbs */}
       <div className="orb w-96 h-96 -top-48 -left-48 bg-primary/[0.04]" />
-      <div className="orb w-64 h-64 -top-20 right-0 bg-blue-500/[0.03]" style={{ animationDelay: '-7s' }} />
+      <div
+        className="orb w-64 h-64 -top-20 right-0 bg-blue-500/[0.03]"
+        style={{ animationDelay: '-7s' }}
+      />
 
       {/* Hero */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
-        className="mb-12 relative"
+        className="mb-10 relative"
       >
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <motion.h1
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className="text-4xl font-bold tracking-tight"
-            >
-              <span className="text-gradient">Data Rooms</span>
-            </motion.h1>
-            <motion.p
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className="text-sm text-muted/80 mt-3 max-w-lg leading-relaxed"
-            >
-              Manage your secure document repositories. Create, organize, and share files with confidence.
-            </motion.p>
-          </div>
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.4, delay: 0.3 }}
-          >
-            <Button
-              onClick={() => setCreateOpen(true)}
-              className="shrink-0"
-            >
-              <Plus size={16} />
-              New Data Room
-            </Button>
-          </motion.div>
-        </div>
+        {/* Eyebrow */}
+        <motion.p
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.05 }}
+          className="text-[10px] font-semibold uppercase tracking-[0.3em] text-primary/60 mb-3"
+        >
+          Dashboard
+        </motion.p>
 
-        {/* Stats bar */}
+        {/* Title */}
+        <motion.h1
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className="text-5xl font-bold tracking-tight"
+        >
+          <span className="text-gradient">Data Rooms</span>
+        </motion.h1>
+
+        {/* Description */}
+        <motion.p
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="text-sm text-muted/80 mt-4 max-w-lg leading-relaxed"
+        >
+          Manage your secure document repositories. Create, organize, and share
+          files with confidence.
+        </motion.p>
+
+        {/* Stat cards */}
         {rooms.length > 0 && (
           <motion.div
-            initial={{ opacity: 0, y: 8 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.25 }}
-            className="flex items-center gap-3 mt-6"
+            transition={{ duration: 0.5, delay: 0.25 }}
+            className="flex items-center gap-4 mt-8 flex-wrap"
           >
-            <div className="stat-chip">
-              <Database size={12} className="text-primary" />
-              <span>{rooms.length} room{rooms.length !== 1 ? 's' : ''}</span>
+            {/* Total Rooms */}
+            <div className="glass rounded-xl p-4 flex items-center gap-3 min-w-[140px]">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/15 ring-1 ring-primary/20">
+                <Database size={18} className="text-primary" />
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-foreground tabular-nums">
+                  {rooms.length}
+                </div>
+                <div className="text-[11px] text-muted/60 font-medium">
+                  Total Rooms
+                </div>
+              </div>
             </div>
-            {rooms.filter((r) => r.passwordHash).length > 0 && (
-              <div className="stat-chip">
-                <Lock size={10} className="text-amber-400" />
-                <span>{rooms.filter((r) => r.passwordHash).length} protected</span>
+
+            {/* Protected */}
+            {protectedCount > 0 && (
+              <div className="glass rounded-xl p-4 flex items-center gap-3 min-w-[140px]">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-400/15 ring-1 ring-amber-400/20">
+                  <Lock size={18} className="text-amber-400" />
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-foreground tabular-nums">
+                    {protectedCount}
+                  </div>
+                  <div className="text-[11px] text-muted/60 font-medium">
+                    Protected
+                  </div>
+                </div>
               </div>
             )}
+
+            {/* Total Files */}
+            <div className="glass rounded-xl p-4 flex items-center gap-3 min-w-[140px]">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/15 ring-1 ring-blue-500/20">
+                <FileText size={18} className="text-blue-400" />
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-foreground tabular-nums">
+                  {totalFiles}
+                </div>
+                <div className="text-[11px] text-muted/60 font-medium">
+                  Total Files
+                </div>
+              </div>
+            </div>
           </motion.div>
         )}
       </motion.div>
 
       {/* Gradient divider */}
-      <div className="divider-gradient mb-10" />
+      <div className="divider-gradient mb-8" />
 
+      {/* Toolbar */}
+      {rooms.length > 0 && (
+        <HomeToolbar onCreateNew={() => setCreateOpen(true)} />
+      )}
+
+      {/* Filter result count */}
+      {isFiltering && rooms.length > 0 && (
+        <p className="text-xs text-muted/50 mb-4">
+          Showing {filteredRooms.length} of {rooms.length} room
+          {rooms.length !== 1 ? 's' : ''}
+        </p>
+      )}
+
+      {/* Content */}
       {status === 'loading' ? (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="rounded-2xl p-6 card-premium inner-glow-purple">
+            <div
+              key={i}
+              className="rounded-2xl p-6 card-premium inner-glow-purple"
+            >
               <div className="flex items-start gap-4">
                 <div className="h-14 w-14 rounded-xl skeleton" />
                 <div className="flex-1 space-y-3 pt-1">
@@ -151,6 +228,18 @@ export default function HomePage() {
             </Button>
           }
         />
+      ) : filteredRooms.length === 0 ? (
+        <div className="text-center py-20">
+          <p className="text-muted/60 text-sm">
+            No rooms match your current filters.
+          </p>
+          <button
+            onClick={() => dispatch(setHomeSearchQuery(''))}
+            className="text-primary text-sm mt-2 hover:underline"
+          >
+            Clear search
+          </button>
+        </div>
       ) : (
         <motion.div
           initial={{ opacity: 0 }}
@@ -158,12 +247,13 @@ export default function HomePage() {
           transition={{ duration: 0.3 }}
           className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
         >
-          {rooms.map((room, i) => (
+          {filteredRooms.map((room, i) => (
             <DataRoomCard
               key={room.id}
               dataRoom={room}
               onRename={handleRename}
               onDelete={handleDelete}
+              stats={roomStats[room.id]}
               index={i}
             />
           ))}

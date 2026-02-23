@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Database, MoreVertical, Pencil, Trash2, ArrowRight, Clock, Lock, Unlock, ShieldCheck } from 'lucide-react';
+import { Database, MoreVertical, Pencil, Trash2, ArrowRight, Clock, Lock, Unlock, ShieldCheck, Folder, FileText } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import type { DataRoom } from '@/types';
-import { formatDate } from '@/lib/utils';
+import { formatRelativeDate } from '@/lib/utils';
 import { hashPassword, verifyPassword } from '@/lib/crypto';
 import {
   DropdownMenu,
@@ -25,9 +25,10 @@ interface DataRoomCardProps {
   onRename: (id: string, name: string) => void;
   onDelete: (id: string) => void;
   index?: number;
+  stats?: { folders: number; files: number };
 }
 
-export default function DataRoomCard({ dataRoom, onRename, onDelete, index = 0 }: DataRoomCardProps) {
+export default function DataRoomCard({ dataRoom, onRename, onDelete, index = 0, stats }: DataRoomCardProps) {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const [renameOpen, setRenameOpen] = useState(false);
@@ -148,23 +149,33 @@ export default function DataRoomCard({ dataRoom, onRename, onDelete, index = 0 }
                 <div className="flex items-center gap-1.5">
                   <Clock size={11} className="text-muted/60" />
                   <span className="text-[11px] text-muted/80">
-                    {formatDate(dataRoom.createdAt)}
+                    {formatRelativeDate(dataRoom.updatedAt)}
                   </span>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  {isProtected ? (
-                    <>
-                      <ShieldCheck size={11} className="text-amber-400/70" />
-                      <span className="text-[11px] text-amber-400/70">Protected</span>
-                    </>
-                  ) : (
-                    <>
-                      <ShieldCheck size={11} className="text-muted/60" />
-                      <span className="text-[11px] text-muted/80">Secure</span>
-                    </>
-                  )}
-                </div>
+                {isProtected && (
+                  <div className="flex items-center gap-1.5">
+                    <ShieldCheck size={11} className="text-amber-400/70" />
+                    <span className="text-[11px] text-amber-400/70">Protected</span>
+                  </div>
+                )}
               </div>
+              {/* Content counts */}
+              {stats && (
+                <div className="flex items-center gap-4 mt-2.5">
+                  <div className="flex items-center gap-1.5">
+                    <Folder size={11} className="text-primary/50" />
+                    <span className="text-[11px] text-muted/60 tabular-nums">
+                      {stats.folders} folder{stats.folders !== 1 ? 's' : ''}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <FileText size={11} className="text-blue-400/50" />
+                    <span className="text-[11px] text-muted/60 tabular-nums">
+                      {stats.files} file{stats.files !== 1 ? 's' : ''}
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

@@ -3,6 +3,8 @@ import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 export type ViewMode = 'grid' | 'list';
 export type SortBy = 'name' | 'date' | 'size' | 'type';
 export type SortDirection = 'asc' | 'desc';
+export type HomeSortBy = 'name' | 'created' | 'updated';
+export type HomeFilter = 'all' | 'protected' | 'unprotected';
 
 interface UiState {
   viewMode: ViewMode;
@@ -12,6 +14,10 @@ interface UiState {
   sidebarOpen: boolean;
   commandOpen: boolean;
   error: string | null;
+  homeSearchQuery: string;
+  homeSortBy: HomeSortBy;
+  homeSortDirection: SortDirection;
+  homeFilter: HomeFilter;
 }
 
 const initialState: UiState = {
@@ -22,6 +28,10 @@ const initialState: UiState = {
   sidebarOpen: true,
   commandOpen: false,
   error: null,
+  homeSearchQuery: '',
+  homeSortBy: 'created',
+  homeSortDirection: 'desc',
+  homeFilter: 'all',
 };
 
 const uiSlice = createSlice({
@@ -58,6 +68,18 @@ const uiSlice = createSlice({
     clearError(state) {
       state.error = null;
     },
+    setHomeSearchQuery(state, action: PayloadAction<string>) {
+      state.homeSearchQuery = action.payload;
+    },
+    setHomeSortBy(state, action: PayloadAction<HomeSortBy>) {
+      state.homeSortBy = action.payload;
+    },
+    toggleHomeSortDirection(state) {
+      state.homeSortDirection = state.homeSortDirection === 'asc' ? 'desc' : 'asc';
+    },
+    setHomeFilter(state, action: PayloadAction<HomeFilter>) {
+      state.homeFilter = action.payload;
+    },
   },
 });
 
@@ -72,6 +94,10 @@ export const {
   setCommandOpen,
   setError,
   clearError,
+  setHomeSearchQuery,
+  setHomeSortBy,
+  toggleHomeSortDirection,
+  setHomeFilter,
 } = uiSlice.actions;
 
 export default uiSlice.reducer;
