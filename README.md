@@ -1,10 +1,8 @@
 # Virtual Data Room
 
-A secure, browser-based document repository built for managing due diligence workflows. Think Google Drive or Dropbox, scoped to a single "Data Room" that acts as the top-level container for organizing and viewing documents.
+A secure, cloud-backed document repository built for managing due diligence workflows. Create data rooms, organize documents in nested folders, upload and preview PDFs, protect rooms with passwords, and collaborate with your team — all with a polished dark glassmorphism UI.
 
 ## Live Demo
-
-The app is deployed and ready to use — no setup required. Try creating a data room, uploading PDFs, and organizing folders directly in the browser.
 
 🔗 [https://virtual-data-room.vercel.app/](https://virtual-data-room.vercel.app/)
 
@@ -12,29 +10,52 @@ The app is deployed and ready to use — no setup required. Try creating a data 
 
 ## Features
 
-- **Data Room Management** - Create, rename, and delete data rooms. Each data room is an isolated container with its own folder hierarchy.
-- **Nested Folders** - Create folders at any depth. A collapsible sidebar tree and breadcrumb trail let you navigate the hierarchy quickly.
-- **PDF Upload & Viewing** - Upload PDF files (up to 50 MB) and view them in a full-screen viewer with page navigation, zoom controls, and keyboard shortcuts.
-- **Rename & Delete** - Every item (data room, folder, file) can be renamed or deleted via a kebab menu. Deleting a folder cascades to all nested content, with a confirmation dialog showing the impact count.
-- **Duplicate Name Handling** - Folders with duplicate names are rejected with an error. Files with duplicate names are automatically suffixed (e.g., `report (1).pdf`).
-- **Persistent Storage** - All data is stored in IndexedDB and survives page refreshes. No server required.
-- **Responsive Layout** - Sidebar collapses on tablet widths; mobile gets a full-width content area.
+### Authentication
+- **Email & Password Auth** — Sign up and log in with email/password via Supabase Auth
+- **Protected Routes** — Unauthenticated users are redirected to the login page
+- **User Menu** — Header shows logged-in user email with a sign-out dropdown
+
+### Data Rooms
+- **Create, Rename, Delete** — Full CRUD for data rooms from the homepage
+- **Password Protection** — Set, change, or remove passwords on individual rooms (SHA-256 hashed)
+- **Room Stats** — Each card shows folder/file counts and relative timestamps ("2h ago")
+
+### File Management
+- **Nested Folders** — Create folders at any depth with a collapsible sidebar tree and breadcrumb navigation
+- **PDF Upload & Viewing** — Upload PDFs (up to 50 MB) and view in a full-screen viewer with zoom, pagination, and keyboard shortcuts
+- **Drag & Drop** — Drag files from your OS into the browser to upload, or drag between folders to move
+- **Rename & Delete** — Every item has a context menu. Folder deletes cascade with an impact count confirmation
+
+### Homepage
+- **Glass Stat Cards** — Dashboard hero with Total Rooms, Protected, and Total Files stats
+- **Search, Filter & Sort** — Search rooms by name, filter by protection status, sort by name/created/updated
+- **Grid Layout** — Responsive card grid with hover animations
+
+### UI & Design
+- **Dark Glassmorphism Theme** — Premium dark theme with glass effects, gradient borders, and inner glows
+- **Grid & List Views** — Toggle between card grid and compact list views in the explorer
+- **Framer Motion Animations** — Smooth entrance animations, hover effects, and transitions
+- **Responsive Layout** — Sidebar collapses on tablet; mobile gets full-width content
 
 ---
 
 ## Tech Stack
 
-| Layer              | Choice                                 |
-| ------------------ | -------------------------------------- |
-| Framework          | React 19 + TypeScript 5.9              |
-| Build Tool         | Vite 7                                 |
-| Styling            | Tailwind CSS 4 (CSS-based theme)       |
-| Icons              | Lucide React                           |
-| Routing            | React Router v7                        |
-| State Management   | React Context + `useReducer`           |
-| Persistence        | IndexedDB via the `idb` library        |
-| PDF Rendering      | `react-pdf` (backed by PDF.js)         |
-| Utilities          | `uuid`, `clsx`, `tailwind-merge`       |
+| Layer            | Choice                                     |
+| ---------------- | ------------------------------------------ |
+| Framework        | React 19 + TypeScript 5.9                  |
+| Build Tool       | Vite 7                                     |
+| Styling          | Tailwind CSS 4 (CSS-based theme)           |
+| Icons            | Lucide React                               |
+| Routing          | React Router v7                            |
+| State Management | Redux Toolkit (RTK)                        |
+| Auth             | Supabase Auth (email/password)             |
+| Database         | Supabase PostgreSQL                        |
+| File Storage     | Supabase Storage                           |
+| PDF Rendering    | react-pdf (PDF.js)                         |
+| Validation       | Zod                                        |
+| Animations       | Framer Motion                              |
+| UI Components    | shadcn/ui + Radix UI                       |
 
 ---
 
@@ -44,6 +65,13 @@ The app is deployed and ready to use — no setup required. Try creating a data 
 
 - **Node.js** >= 18
 - **npm** >= 9
+- A **Supabase** project (free tier works)
+
+### Supabase Setup
+
+1. Create a project at [supabase.com](https://supabase.com)
+2. Run the SQL migration in the SQL Editor (see [Database Schema](#database-schema) below)
+3. Copy your **Project URL** and **anon key** from Project Settings > API Keys
 
 ### Installation
 
@@ -55,7 +83,13 @@ cd VirtualDataRoom
 # 2. Install dependencies
 npm install
 
-# 3. Start the dev server
+# 3. Create .env.local with your Supabase credentials
+cat > .env.local << EOF
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key-here
+EOF
+
+# 4. Start the dev server
 npm run dev
 ```
 
@@ -71,67 +105,107 @@ npm run lint     # Run ESLint
 
 ---
 
-## How to Use the App
+## Database Schema
 
-### 1. Create a Data Room
+Run this SQL in your Supabase SQL Editor to set up the tables, RLS policies, and storage bucket:
 
-From the home page, click **"New Data Room"**, give it a name, and press **Create**. You'll be taken straight into the explorer view.
+```sql
+-- Tables
+create table data_rooms (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  root_folder_id uuid not null,
+  password_hash text,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
 
-### 2. Organize with Folders
+create table folders (
+  id uuid primary key default gen_random_uuid(),
+  data_room_id uuid not null references data_rooms(id) on delete cascade,
+  parent_id uuid references folders(id) on delete cascade,
+  name text not null,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
 
-Click **"New Folder"** in the toolbar to create a folder inside the current directory. Double-click any folder to navigate into it. Use the **sidebar tree** or **breadcrumb trail** to jump to any level of the hierarchy.
+create table files (
+  id uuid primary key default gen_random_uuid(),
+  data_room_id uuid not null references data_rooms(id) on delete cascade,
+  folder_id uuid not null references folders(id) on delete cascade,
+  name text not null,
+  extension text not null,
+  mime_type text not null,
+  size bigint not null,
+  storage_path text not null,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
 
-### 3. Upload PDFs
+-- RLS policies (shareable model: all authenticated users have full access)
+alter table data_rooms enable row level security;
+alter table folders enable row level security;
+alter table files enable row level security;
 
-Click **"Upload PDF"** in the toolbar and select a `.pdf` file from your computer. The file appears in the current folder. Only PDF files up to 50 MB are accepted; all other types are rejected with an error message.
+create policy "Authenticated full access" on data_rooms for all using (auth.role() = 'authenticated');
+create policy "Authenticated full access" on folders for all using (auth.role() = 'authenticated');
+create policy "Authenticated full access" on files for all using (auth.role() = 'authenticated');
 
-### 4. View a PDF
+-- Recursive descendant count function
+create or replace function get_descendant_counts(root_id uuid)
+returns table(folder_count bigint, file_count bigint) as $$
+  with recursive descendants as (
+    select id from folders where parent_id = root_id
+    union all
+    select f.id from folders f join descendants d on f.parent_id = d.id
+  )
+  select
+    (select count(*) from descendants) as folder_count,
+    (select count(*) from files where folder_id = root_id or folder_id in (select id from descendants)) as file_count;
+$$ language sql stable;
 
-Double-click a file (or use the kebab menu and choose **View**) to open the full-screen PDF viewer. Controls:
-
-| Action          | How                          |
-| --------------- | ---------------------------- |
-| Next page       | Right arrow key or `>` button |
-| Previous page   | Left arrow key or `<` button  |
-| Zoom in/out     | `+` / `-` buttons            |
-| Reset zoom      | Fit-width button             |
-| Close viewer    | `Esc` key or `X` button      |
-
-### 5. Rename or Delete Items
-
-Click the **three-dot menu** on any data room card, folder, or file to see **Rename** and **Delete** options. Deleting a folder shows how many subfolders and files will be removed before you confirm.
+-- Storage bucket for file blobs
+insert into storage.buckets (id, name, public) values ('files', 'files', false);
+create policy "Auth upload" on storage.objects for insert with check (auth.role() = 'authenticated' and bucket_id = 'files');
+create policy "Auth read" on storage.objects for select using (auth.role() = 'authenticated' and bucket_id = 'files');
+create policy "Auth delete" on storage.objects for delete using (auth.role() = 'authenticated' and bucket_id = 'files');
+```
 
 ---
 
-## Design Decisions
+## How to Use
 
-### Why IndexedDB instead of localStorage?
+### 1. Sign Up / Log In
 
-localStorage is limited to ~5 MB of string data. IndexedDB supports structured storage of large binary blobs (ArrayBuffers), which is essential for storing PDF files in the browser. The `idb` library provides a clean Promise-based wrapper that keeps the code readable.
+Visit the app and create an account with your email and password. Passwords require 8+ characters, an uppercase letter, a number, and a special character.
 
-### Why Context + useReducer instead of Redux or Zustand?
+### 2. Create a Data Room
 
-For an MVP with a single global store and straightforward CRUD actions, React's built-in Context + `useReducer` pattern is sufficient and avoids adding another dependency. The reducer centralizes state transitions, making the data flow predictable without the boilerplate of Redux.
+From the homepage dashboard, click **"New Data Room"**, give it a name, and press Create. Optionally set a password to protect it.
 
-### Blob separation from file metadata
+### 3. Organize with Folders
 
-File metadata (`FileEntry`) is stored in one IndexedDB object store, while the raw PDF binary is stored in a separate `blobs` store keyed by a UUID (`blobKey`). This separation means listing files is fast (no large blobs loaded), and blob cleanup is handled transactionally during delete operations.
+Click **"New Folder"** in the toolbar. Double-click folders to navigate. Use the **sidebar tree** or **breadcrumb** to jump between levels.
 
-### Recursive cascade deletes
+### 4. Upload PDFs
 
-Deleting a folder traverses all descendants using a BFS queue, collects every child folder and file, then performs a single IndexedDB transaction to remove everything atomically. This ensures no orphaned records are left behind.
+Click **"Upload PDF"** or drag files from your OS into the browser. Only PDFs up to 50 MB are accepted.
 
-### Compound indexes for efficient queries
+### 5. View a PDF
 
-The `folders` and `files` stores use compound indexes (e.g., `[dataRoomId, parentId]`) so that listing the children of a specific folder is a single indexed lookup rather than a full table scan followed by filtering.
+Double-click a file to open the full-screen viewer:
 
-### Native `<dialog>` element
+| Action        | How                           |
+| ------------- | ----------------------------- |
+| Next page     | Right arrow or `>` button     |
+| Previous page | Left arrow or `<` button      |
+| Zoom in/out   | `+` / `-` buttons             |
+| Reset zoom    | Fit-width button              |
+| Close viewer  | `Esc` or `X` button           |
 
-All modals use the native HTML `<dialog>` element with `showModal()`, which provides built-in focus trapping, backdrop, and `Esc` to close — without needing a third-party modal library.
+### 6. Manage Items
 
-### Tailwind v4 CSS-based theming
-
-Instead of a `tailwind.config.js` file, the project uses Tailwind v4's `@theme` directive in CSS to define design tokens (colors, radii, fonts). This keeps the theme co-located with styles and eliminates a config file.
+Click the **three-dot menu** on any card for Rename, Delete, or password options. Folder deletes show a confirmation with the count of nested content.
 
 ---
 
@@ -140,77 +214,80 @@ Instead of a `tailwind.config.js` file, the project uses Tailwind v4's `@theme` 
 ```
 src/
 ├── main.tsx                          # Entry point
-├── App.tsx                           # Router + providers
+├── App.tsx                           # Router + providers + AuthGuard
 ├── index.css                         # Tailwind v4 theme tokens
 │
 ├── types/
 │   └── index.ts                      # DataRoom, Folder, FileEntry interfaces
 │
 ├── lib/
-│   └── utils.ts                      # cn(), formatBytes(), formatDate(), getUniqueFileName()
+│   ├── utils.ts                      # cn(), formatBytes(), formatDate(), formatRelativeDate()
+│   ├── crypto.ts                     # SHA-256 password hashing + verification
+│   ├── supabase.ts                   # Supabase client singleton
+│   └── mappers.ts                    # DB row (snake_case) → TypeScript (camelCase)
 │
 ├── services/
-│   └── storage.ts                    # IndexedDB data access layer (all CRUD operations)
+│   └── storage.ts                    # Supabase data access layer (all CRUD operations)
 │
-├── context/
-│   └── AppContext.tsx                 # React Context provider + useReducer + action creators
+├── contexts/
+│   ├── auth-context.ts               # AuthContext + AuthState type
+│   └── AuthContext.tsx                # AuthProvider (session management)
+│
+├── hooks/
+│   ├── useAuth.ts                    # useAuth() hook
+│   └── useFilteredRooms.ts           # Homepage search/filter/sort logic
+│
+├── store/
+│   ├── index.ts                      # Redux store configuration
+│   ├── hooks.ts                      # Typed useAppSelector / useAppDispatch
+│   └── slices/
+│       ├── dataRoomsSlice.ts         # Data room CRUD + stats thunks
+│       ├── explorerSlice.ts          # File explorer state + thunks
+│       └── uiSlice.ts               # View mode, sort, search, sidebar state
 │
 ├── pages/
-│   ├── HomePage.tsx                  # Data room list with create/rename/delete
-│   └── DataRoomPage.tsx              # File explorer: sidebar, breadcrumb, toolbar, content
+│   ├── HomePage.tsx                  # Dashboard with glass stat cards + room grid
+│   ├── DataRoomPage.tsx              # File explorer: sidebar, breadcrumb, toolbar, content
+│   ├── LoginPage.tsx                 # Email/password sign in
+│   └── SignupPage.tsx                # Registration with password strength meter
 │
 ├── components/
+│   ├── auth/
+│   │   └── AuthGuard.tsx             # Route protection (redirect to /login)
 │   ├── layout/
-│   │   └── Header.tsx                # App header with logo
+│   │   └── Header.tsx                # App header with logo + user menu
 │   ├── dataroom/
-│   │   ├── DataRoomCard.tsx          # Card with kebab menu
-│   │   └── CreateDataRoomDialog.tsx  # Modal to create a data room
+│   │   ├── DataRoomCard.tsx          # Room card with stats + password badge
+│   │   ├── HomeToolbar.tsx           # Search + filter + sort + create button
+│   │   ├── PasswordDialog.tsx        # Set/change/remove/unlock password modal
+│   │   └── CreateDataRoomDialog.tsx  # Create data room modal
 │   ├── explorer/
 │   │   ├── Breadcrumb.tsx            # Clickable folder path
-│   │   ├── Toolbar.tsx               # New Folder + Upload PDF buttons
+│   │   ├── Toolbar.tsx               # New Folder + Upload buttons + view toggle
 │   │   ├── FolderTree.tsx            # Recursive collapsible sidebar tree
-│   │   ├── FolderCard.tsx            # Folder item in content grid
-│   │   ├── FileCard.tsx              # File item in content grid
-│   │   └── ContentArea.tsx           # Renders folder + file cards (or empty state)
+│   │   ├── FolderCard.tsx            # Folder card with subfolder/file counts
+│   │   ├── FileCard.tsx              # File card with extension badge
+│   │   └── ContentArea.tsx           # Grid/list rendering + empty states
 │   ├── file-viewer/
-│   │   └── FileViewerModal.tsx       # Full-screen PDF viewer with zoom + pagination
+│   │   └── FileViewerModal.tsx       # Full-screen PDF viewer
 │   └── shared/
-│       ├── ConfirmDialog.tsx         # Reusable delete confirmation modal
-│       ├── RenameDialog.tsx          # Reusable rename / create-name modal
-│       ├── EmptyState.tsx            # Placeholder with icon, title, description, CTA
-│       └── Toast.tsx                 # Auto-dismissing error/success notification
+│       ├── ConfirmDialog.tsx         # Reusable delete confirmation
+│       ├── RenameDialog.tsx          # Reusable rename/create-name modal
+│       └── EmptyState.tsx            # Empty state placeholder
 ```
-
----
-
-## Edge Cases Handled
-
-| Scenario                        | Behavior                                                    |
-| ------------------------------- | ----------------------------------------------------------- |
-| Non-PDF file selected           | Rejected with alert message                                 |
-| File > 50 MB                    | Rejected with alert message                                 |
-| Empty (0-byte) file             | Rejected with alert message                                 |
-| Duplicate file name in folder   | Auto-suffixed: `report.pdf` becomes `report (1).pdf`        |
-| Duplicate folder name in parent | Rejected with error toast                                   |
-| Empty folder/file name          | Submit button disabled; form won't submit                   |
-| Name > 255 characters           | Input capped at `maxLength="255"`                           |
-| Long names in UI                | Truncated with CSS `text-overflow: ellipsis`; full on hover |
-| Delete folder with children     | Confirmation shows count of nested folders and files         |
-| Deep nesting (10+ levels)       | Breadcrumb truncates middle segments with `...`              |
-| No data rooms                   | Empty state with illustration and create CTA                |
-| Empty folder                    | Empty state prompting upload or folder creation             |
 
 ---
 
 ## Deployment (Vercel)
 
-1. Push the repo to GitHub (already done).
-2. Go to [vercel.com](https://vercel.com) and sign in with your GitHub account.
-3. Click **"Add New Project"** and import the `VirtualDataRoom` repository.
-4. Vercel auto-detects Vite. No additional configuration needed.
-5. Click **Deploy**. Your app will be live at the provided URL.
+1. Push the repo to GitHub
+2. Import the project on [vercel.com](https://vercel.com)
+3. Add environment variables:
+   - `VITE_SUPABASE_URL` — your Supabase project URL
+   - `VITE_SUPABASE_ANON_KEY` — your Supabase anon/public key
+4. Deploy. Vercel auto-detects Vite.
 
-For SPA routing to work on Vercel, add a `vercel.json` at the project root:
+For SPA routing, add a `vercel.json` at the project root:
 
 ```json
 {
