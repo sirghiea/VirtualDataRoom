@@ -23,7 +23,7 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
 
 interface FileViewerModalProps {
   file: FileEntry;
-  getBlob: (blobKey: string) => Promise<ArrayBuffer | undefined>;
+  getBlob: (storagePath: string) => Promise<ArrayBuffer | undefined>;
   onClose: () => void;
 }
 
@@ -40,7 +40,7 @@ export default function FileViewerModal({ file, getBlob, onClose }: FileViewerMo
     let cancelled = false;
     (async () => {
       try {
-        const data = await getBlob(file.blobKey);
+        const data = await getBlob(file.storagePath);
         if (cancelled) return;
         if (!data) {
           setError('File data not found');
@@ -57,7 +57,7 @@ export default function FileViewerModal({ file, getBlob, onClose }: FileViewerMo
     return () => {
       cancelled = true;
     };
-  }, [file.blobKey, getBlob]);
+  }, [file.storagePath, getBlob]);
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {

@@ -1,440 +1,431 @@
-import { openDB, type IDBPDatabase } from 'idb';
-import { v4 as uuidv4 } from 'uuid';
+import { supabase } from '@/lib/supabase';
+import { toDataRoom, toFolder, toFileEntry } from '@/lib/mappers';
 import type { DataRoom, Folder, FileEntry } from '@/types';
 
-const DB_NAME = 'virtual-data-room';
-const DB_VERSION = 1;
-
-type VDRSchema = {
-  datarooms: {
-    key: string;
-    value: DataRoom;
-    indexes: { name: string };
-  };
-  folders: {
-    key: string;
-    value: Folder;
-    indexes: {
-      dataRoomId: string;
-      parentId: string;
-      'dataRoomId_parentId': [string, string | null];
-    };
-  };
-  files: {
-    key: string;
-    value: FileEntry;
-    indexes: {
-      dataRoomId: string;
-      folderId: string;
-      'dataRoomId_folderId': [string, string];
-    };
-  };
-  blobs: {
-    key: string;
-    value: { id: string; data: ArrayBuffer };
-  };
-};
-
-let dbPromise: Promise<IDBPDatabase<VDRSchema>> | null = null;
-
-function getDb(): Promise<IDBPDatabase<VDRSchema>> {
-  if (!dbPromise) {
-    dbPromise = openDB<VDRSchema>(DB_NAME, DB_VERSION, {
-      upgrade(db) {
-        const dataroomStore = db.createObjectStore('datarooms', { keyPath: 'id' });
-        dataroomStore.createIndex('name', 'name');
-
-        const folderStore = db.createObjectStore('folders', { keyPath: 'id' });
-        folderStore.createIndex('dataRoomId', 'dataRoomId');
-        folderStore.createIndex('parentId', 'parentId');
-        folderStore.createIndex('dataRoomId_parentId', ['dataRoomId', 'parentId']);
-
-        const fileStore = db.createObjectStore('files', { keyPath: 'id' });
-        fileStore.createIndex('dataRoomId', 'dataRoomId');
-        fileStore.createIndex('folderId', 'folderId');
-        fileStore.createIndex('dataRoomId_folderId', ['dataRoomId', 'folderId']);
-
-        db.createObjectStore('blobs', { keyPath: 'id' });
-      },
-    });
-  }
-  return dbPromise;
-}
-
-// --- DataRoom ---
+// ---------------------------------------------------------------------------
+// DataRoom
+// ---------------------------------------------------------------------------
 
 export async function getAllDataRooms(): Promise<DataRoom[]> {
-  const db = await getDb();
-  return db.getAll('datarooms');
+  const { data, error } = await supabase
+    .from('data_rooms')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map(toDataRoom);
 }
 
 export async function getDataRoom(id: string): Promise<DataRoom | undefined> {
-  const db = await getDb();
-  return db.get('datarooms', id);
+  const { data, error } = await supabase
+    .from('data_rooms')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle();
+  if (error) throw error;
+  return data ? toDataRoom(data) : undefined;
 }
 
 export async function getDataRoomByName(name: string): Promise<DataRoom | undefined> {
-  const db = await getDb();
-  return db.getFromIndex('datarooms', 'name', name);
+  const { data, error } = await supabase
+    .from('data_rooms')
+    .select('*')
+    .ilike('name', name)
+    .maybeSingle();
+  if (error) throw error;
+  return data ? toDataRoom(data) : undefined;
 }
 
 export async function createDataRoom(name: string): Promise<DataRoom> {
-  const db = await getDb();
+  const rootFolderId = crypto.randomUUID();
+  const id = crypto.randomUUID();
   const now = new Date().toISOString();
-  const rootFolderId = uuidv4();
-  const dataRoom: DataRoom = {
-    id: uuidv4(),
+
+  // Insert data room
+  const { error: roomError } = await supabase.from('data_rooms').insert({
+    id,
     name,
-    createdAt: now,
-    updatedAt: now,
-    rootFolderId,
-  };
+    root_folder_id: rootFolderId,
+    created_at: now,
+    updated_at: now,
+  });
+  if (roomError) throw roomError;
 
-  const rootFolder: Folder = {
+  // Insert root folder
+  const { error: folderError } = await supabase.from('folders').insert({
     id: rootFolderId,
-    dataRoomId: dataRoom.id,
-    parentId: null,
+    data_room_id: id,
+    parent_id: null,
     name: 'Root',
-    createdAt: now,
-    updatedAt: now,
-  };
+    created_at: now,
+    updated_at: now,
+  });
+  if (folderError) throw folderError;
 
-  const tx = db.transaction(['datarooms', 'folders'], 'readwrite');
-  await Promise.all([
-    tx.objectStore('datarooms').put(dataRoom),
-    tx.objectStore('folders').put(rootFolder),
-    tx.done,
-  ]);
-
-  return dataRoom;
+  return { id, name, rootFolderId, createdAt: now, updatedAt: now };
 }
 
 export async function updateDataRoom(id: string, name: string): Promise<DataRoom> {
-  const db = await getDb();
-  const existing = await db.get('datarooms', id);
-  if (!existing) throw new Error('Data room not found');
-
-  const updated: DataRoom = { ...existing, name, updatedAt: new Date().toISOString() };
-  await db.put('datarooms', updated);
-  return updated;
+  const now = new Date().toISOString();
+  const { data, error } = await supabase
+    .from('data_rooms')
+    .update({ name, updated_at: now })
+    .eq('id', id)
+    .select()
+    .single();
+  if (error) throw error;
+  return toDataRoom(data);
 }
 
 export async function setDataRoomPassword(
   id: string,
   passwordHash: string | null,
 ): Promise<DataRoom> {
-  const db = await getDb();
-  const existing = await db.get('datarooms', id);
-  if (!existing) throw new Error('Data room not found');
-
-  const updated: DataRoom = {
-    ...existing,
-    passwordHash,
-    updatedAt: new Date().toISOString(),
-  };
-  await db.put('datarooms', updated);
-  return updated;
+  const now = new Date().toISOString();
+  const { data, error } = await supabase
+    .from('data_rooms')
+    .update({ password_hash: passwordHash, updated_at: now })
+    .eq('id', id)
+    .select()
+    .single();
+  if (error) throw error;
+  return toDataRoom(data);
 }
 
 export async function deleteDataRoom(id: string): Promise<void> {
-  const db = await getDb();
+  // Collect storage paths for all files in this room so we can remove blobs
+  const { data: files } = await supabase
+    .from('files')
+    .select('storage_path')
+    .eq('data_room_id', id);
 
-  const folders = await db.getAllFromIndex('folders', 'dataRoomId', id);
-  const files = await db.getAllFromIndex('files', 'dataRoomId', id);
-
-  const tx = db.transaction(['datarooms', 'folders', 'files', 'blobs'], 'readwrite');
-  const promises: Promise<void>[] = [
-    tx.objectStore('datarooms').delete(id) as unknown as Promise<void>,
-  ];
-
-  for (const folder of folders) {
-    promises.push(tx.objectStore('folders').delete(folder.id) as unknown as Promise<void>);
-  }
-  for (const file of files) {
-    promises.push(tx.objectStore('files').delete(file.id) as unknown as Promise<void>);
-    promises.push(tx.objectStore('blobs').delete(file.blobKey) as unknown as Promise<void>);
+  const paths = (files ?? []).map((f) => f.storage_path as string).filter(Boolean);
+  if (paths.length > 0) {
+    await supabase.storage.from('files').remove(paths);
   }
 
-  promises.push(tx.done);
-  await Promise.all(promises);
+  // Cascade delete via foreign keys handles folders + files rows
+  const { error } = await supabase.from('data_rooms').delete().eq('id', id);
+  if (error) throw error;
 }
 
-// --- Folders ---
+// ---------------------------------------------------------------------------
+// Folders
+// ---------------------------------------------------------------------------
 
 export async function getFoldersByParent(
   dataRoomId: string,
-  parentId: string | null
+  parentId: string | null,
 ): Promise<Folder[]> {
-  const db = await getDb();
-  return db.getAllFromIndex('folders', 'dataRoomId_parentId', [dataRoomId, parentId!]);
+  let query = supabase
+    .from('folders')
+    .select('*')
+    .eq('data_room_id', dataRoomId);
+
+  if (parentId === null) {
+    query = query.is('parent_id', null);
+  } else {
+    query = query.eq('parent_id', parentId);
+  }
+
+  const { data, error } = await query.order('name');
+  if (error) throw error;
+  return (data ?? []).map(toFolder);
 }
 
 export async function getAllFoldersInDataRoom(dataRoomId: string): Promise<Folder[]> {
-  const db = await getDb();
-  return db.getAllFromIndex('folders', 'dataRoomId', dataRoomId);
+  const { data, error } = await supabase
+    .from('folders')
+    .select('*')
+    .eq('data_room_id', dataRoomId)
+    .order('name');
+  if (error) throw error;
+  return (data ?? []).map(toFolder);
 }
 
 export async function getFolder(id: string): Promise<Folder | undefined> {
-  const db = await getDb();
-  return db.get('folders', id);
+  const { data, error } = await supabase
+    .from('folders')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle();
+  if (error) throw error;
+  return data ? toFolder(data) : undefined;
 }
 
 export async function createFolder(
   dataRoomId: string,
   parentId: string,
-  name: string
+  name: string,
 ): Promise<Folder> {
-  const db = await getDb();
   const now = new Date().toISOString();
-  const folder: Folder = {
-    id: uuidv4(),
-    dataRoomId,
-    parentId,
+  const id = crypto.randomUUID();
+
+  const { error } = await supabase.from('folders').insert({
+    id,
+    data_room_id: dataRoomId,
+    parent_id: parentId,
     name,
-    createdAt: now,
-    updatedAt: now,
-  };
-  await db.put('folders', folder);
-  return folder;
+    created_at: now,
+    updated_at: now,
+  });
+  if (error) throw error;
+
+  return { id, dataRoomId, parentId, name, createdAt: now, updatedAt: now };
 }
 
 export async function updateFolder(id: string, name: string): Promise<Folder> {
-  const db = await getDb();
-  const existing = await db.get('folders', id);
-  if (!existing) throw new Error('Folder not found');
-
-  const updated: Folder = { ...existing, name, updatedAt: new Date().toISOString() };
-  await db.put('folders', updated);
-  return updated;
+  const now = new Date().toISOString();
+  const { data, error } = await supabase
+    .from('folders')
+    .update({ name, updated_at: now })
+    .eq('id', id)
+    .select()
+    .single();
+  if (error) throw error;
+  return toFolder(data);
 }
 
 export async function deleteFolder(id: string): Promise<void> {
-  const db = await getDb();
-
   // Collect all descendant folder IDs recursively
-  const folderIdsToDelete: string[] = [id];
+  const folderIds: string[] = [id];
   let queue = [id];
+
   while (queue.length > 0) {
-    const nextQueue: string[] = [];
-    for (const parentId of queue) {
-      const folder = await db.get('folders', parentId);
-      if (!folder) continue;
-      const children = await db.getAllFromIndex(
-        'folders',
-        'dataRoomId_parentId',
-        [folder.dataRoomId, parentId]
-      );
-      for (const child of children) {
-        folderIdsToDelete.push(child.id);
-        nextQueue.push(child.id);
-      }
-    }
-    queue = nextQueue;
+    const { data: children } = await supabase
+      .from('folders')
+      .select('id')
+      .in('parent_id', queue);
+
+    const childIds = (children ?? []).map((c) => c.id as string);
+    folderIds.push(...childIds);
+    queue = childIds;
   }
 
-  // Collect all files in those folders
-  const filesToDelete: FileEntry[] = [];
-  for (const folderId of folderIdsToDelete) {
-    const files = await db.getAllFromIndex('files', 'folderId', folderId);
-    filesToDelete.push(...files);
+  // Collect storage paths of all files in those folders
+  const { data: files } = await supabase
+    .from('files')
+    .select('storage_path')
+    .in('folder_id', folderIds);
+
+  const paths = (files ?? []).map((f) => f.storage_path as string).filter(Boolean);
+  if (paths.length > 0) {
+    await supabase.storage.from('files').remove(paths);
   }
 
-  const tx = db.transaction(['folders', 'files', 'blobs'], 'readwrite');
-  const promises: Promise<void>[] = [];
-
-  for (const folderId of folderIdsToDelete) {
-    promises.push(tx.objectStore('folders').delete(folderId) as unknown as Promise<void>);
-  }
-  for (const file of filesToDelete) {
-    promises.push(tx.objectStore('files').delete(file.id) as unknown as Promise<void>);
-    promises.push(tx.objectStore('blobs').delete(file.blobKey) as unknown as Promise<void>);
-  }
-
-  promises.push(tx.done);
-  await Promise.all(promises);
+  // Delete the root folder — cascade will remove children + files rows
+  const { error } = await supabase.from('folders').delete().eq('id', id);
+  if (error) throw error;
 }
 
 export async function getFolderPath(folderId: string): Promise<Folder[]> {
-  const db = await getDb();
   const path: Folder[] = [];
   let currentId: string | null = folderId;
 
   while (currentId) {
-    const folder: Folder | undefined = await db.get('folders', currentId);
-    if (!folder) break;
-    path.unshift(folder);
-    currentId = folder.parentId;
+    const { data, error }: { data: Record<string, unknown> | null; error: unknown } = await supabase
+      .from('folders')
+      .select('*')
+      .eq('id', currentId)
+      .maybeSingle();
+    if (error) throw error;
+    if (!data) break;
+    path.unshift(toFolder(data));
+    currentId = (data.parent_id as string | null);
   }
 
   return path;
 }
 
 export async function getDescendantCounts(
-  folderId: string
+  folderId: string,
 ): Promise<{ folders: number; files: number }> {
-  const db = await getDb();
-  let folderCount = 0;
-  let fileCount = 0;
+  const { data, error } = await supabase.rpc('get_descendant_counts', {
+    root_id: folderId,
+  });
+  if (error) throw error;
 
-  let queue = [folderId];
-  while (queue.length > 0) {
-    const nextQueue: string[] = [];
-    for (const parentId of queue) {
-      const folder = await db.get('folders', parentId);
-      if (!folder) continue;
-      const children = await db.getAllFromIndex(
-        'folders',
-        'dataRoomId_parentId',
-        [folder.dataRoomId, parentId]
-      );
-      const files = await db.getAllFromIndex('files', 'folderId', parentId);
-      folderCount += children.length;
-      fileCount += files.length;
-      for (const child of children) {
-        nextQueue.push(child.id);
-      }
-    }
-    queue = nextQueue;
-  }
-
-  return { folders: folderCount, files: fileCount };
+  // RPC returns an array with one row
+  const row = Array.isArray(data) ? data[0] : data;
+  return {
+    folders: Number(row?.folder_count ?? 0),
+    files: Number(row?.file_count ?? 0),
+  };
 }
 
-// --- Files ---
+// ---------------------------------------------------------------------------
+// Files
+// ---------------------------------------------------------------------------
 
 export async function getFilesByFolder(
   dataRoomId: string,
-  folderId: string
+  folderId: string,
 ): Promise<FileEntry[]> {
-  const db = await getDb();
-  return db.getAllFromIndex('files', 'dataRoomId_folderId', [dataRoomId, folderId]);
+  const { data, error } = await supabase
+    .from('files')
+    .select('*')
+    .eq('data_room_id', dataRoomId)
+    .eq('folder_id', folderId)
+    .order('name');
+  if (error) throw error;
+  return (data ?? []).map(toFileEntry);
 }
 
 export async function getFile(id: string): Promise<FileEntry | undefined> {
-  const db = await getDb();
-  return db.get('files', id);
+  const { data, error } = await supabase
+    .from('files')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle();
+  if (error) throw error;
+  return data ? toFileEntry(data) : undefined;
 }
 
 export async function uploadFile(
   dataRoomId: string,
   folderId: string,
   file: File,
-  uniqueName: string
+  uniqueName: string,
 ): Promise<FileEntry> {
-  const db = await getDb();
   const now = new Date().toISOString();
-  const blobKey = uuidv4();
-  const buffer = await file.arrayBuffer();
-
+  const id = crypto.randomUUID();
   const ext = file.name.split('.').pop() ?? '';
-  const fileEntry: FileEntry = {
-    id: uuidv4(),
+  const storagePath = `${dataRoomId}/${id}.${ext}`;
+
+  // Upload blob to Supabase Storage
+  const { error: uploadError } = await supabase.storage
+    .from('files')
+    .upload(storagePath, file, { contentType: file.type });
+  if (uploadError) throw uploadError;
+
+  // Insert file metadata row
+  const { error: insertError } = await supabase.from('files').insert({
+    id,
+    data_room_id: dataRoomId,
+    folder_id: folderId,
+    name: uniqueName,
+    extension: ext,
+    mime_type: file.type,
+    size: file.size,
+    storage_path: storagePath,
+    created_at: now,
+    updated_at: now,
+  });
+  if (insertError) {
+    // Rollback storage upload on DB insert failure
+    await supabase.storage.from('files').remove([storagePath]);
+    throw insertError;
+  }
+
+  return {
+    id,
     dataRoomId,
     folderId,
     name: uniqueName,
     extension: ext,
     mimeType: file.type,
     size: file.size,
-    blobKey,
+    storagePath,
     createdAt: now,
     updatedAt: now,
   };
-
-  const tx = db.transaction(['files', 'blobs'], 'readwrite');
-  await Promise.all([
-    tx.objectStore('files').put(fileEntry),
-    tx.objectStore('blobs').put({ id: blobKey, data: buffer }),
-    tx.done,
-  ]);
-
-  return fileEntry;
 }
 
-export async function getFileBlob(blobKey: string): Promise<ArrayBuffer | undefined> {
-  const db = await getDb();
-  const record = await db.get('blobs', blobKey);
-  return record?.data;
+export async function getFileBlob(storagePath: string): Promise<ArrayBuffer | undefined> {
+  const { data, error } = await supabase.storage.from('files').download(storagePath);
+  if (error) throw error;
+  if (!data) return undefined;
+  return data.arrayBuffer();
 }
 
 export async function updateFile(id: string, name: string): Promise<FileEntry> {
-  const db = await getDb();
-  const existing = await db.get('files', id);
-  if (!existing) throw new Error('File not found');
-
-  const updated: FileEntry = { ...existing, name, updatedAt: new Date().toISOString() };
-  await db.put('files', updated);
-  return updated;
+  const now = new Date().toISOString();
+  const { data, error } = await supabase
+    .from('files')
+    .update({ name, updated_at: now })
+    .eq('id', id)
+    .select()
+    .single();
+  if (error) throw error;
+  return toFileEntry(data);
 }
 
 export async function deleteFile(id: string): Promise<void> {
-  const db = await getDb();
-  const file = await db.get('files', id);
-  if (!file) return;
+  // Get storage path before deleting the row
+  const { data: file } = await supabase
+    .from('files')
+    .select('storage_path')
+    .eq('id', id)
+    .maybeSingle();
 
-  const tx = db.transaction(['files', 'blobs'], 'readwrite');
-  await Promise.all([
-    tx.objectStore('files').delete(id),
-    tx.objectStore('blobs').delete(file.blobKey),
-    tx.done,
-  ]);
+  if (file?.storage_path) {
+    await supabase.storage.from('files').remove([file.storage_path]);
+  }
+
+  const { error } = await supabase.from('files').delete().eq('id', id);
+  if (error) throw error;
 }
 
 export async function moveFile(fileId: string, targetFolderId: string): Promise<FileEntry> {
-  const db = await getDb();
-  const existing = await db.get('files', fileId);
-  if (!existing) throw new Error('File not found');
-
-  const updated: FileEntry = {
-    ...existing,
-    folderId: targetFolderId,
-    updatedAt: new Date().toISOString(),
-  };
-  await db.put('files', updated);
-  return updated;
+  const now = new Date().toISOString();
+  const { data, error } = await supabase
+    .from('files')
+    .update({ folder_id: targetFolderId, updated_at: now })
+    .eq('id', fileId)
+    .select()
+    .single();
+  if (error) throw error;
+  return toFileEntry(data);
 }
 
 export async function moveFolder(folderId: string, targetParentId: string): Promise<Folder> {
-  const db = await getDb();
-  const existing = await db.get('folders', folderId);
-  if (!existing) throw new Error('Folder not found');
-
-  const updated: Folder = {
-    ...existing,
-    parentId: targetParentId,
-    updatedAt: new Date().toISOString(),
-  };
-  await db.put('folders', updated);
-  return updated;
+  const now = new Date().toISOString();
+  const { data, error } = await supabase
+    .from('folders')
+    .update({ parent_id: targetParentId, updated_at: now })
+    .eq('id', folderId)
+    .select()
+    .single();
+  if (error) throw error;
+  return toFolder(data);
 }
 
 export async function getRoomStats(
-  rooms: DataRoom[]
+  rooms: DataRoom[],
 ): Promise<Record<string, { folders: number; files: number }>> {
   const result: Record<string, { folders: number; files: number }> = {};
   await Promise.all(
     rooms.map(async (room) => {
       result[room.id] = await getDescendantCounts(room.rootFolderId);
-    })
+    }),
   );
   return result;
 }
 
 export async function searchInDataRoom(
   dataRoomId: string,
-  query: string
+  query: string,
 ): Promise<{ folders: Folder[]; files: FileEntry[] }> {
-  const db = await getDb();
-  const lowerQuery = query.toLowerCase();
+  const pattern = `%${query}%`;
 
-  const allFolders = await db.getAllFromIndex('folders', 'dataRoomId', dataRoomId);
-  const allFiles = await db.getAllFromIndex('files', 'dataRoomId', dataRoomId);
+  const [foldersRes, filesRes] = await Promise.all([
+    supabase
+      .from('folders')
+      .select('*')
+      .eq('data_room_id', dataRoomId)
+      .not('parent_id', 'is', null)
+      .ilike('name', pattern),
+    supabase
+      .from('files')
+      .select('*')
+      .eq('data_room_id', dataRoomId)
+      .ilike('name', pattern),
+  ]);
 
-  const matchedFolders = allFolders.filter(
-    (f) => f.parentId !== null && f.name.toLowerCase().includes(lowerQuery)
-  );
-  const matchedFiles = allFiles.filter(
-    (f) => `${f.name}.${f.extension}`.toLowerCase().includes(lowerQuery)
-  );
+  if (foldersRes.error) throw foldersRes.error;
+  if (filesRes.error) throw filesRes.error;
 
-  return { folders: matchedFolders, files: matchedFiles };
+  return {
+    folders: (foldersRes.data ?? []).map(toFolder),
+    files: (filesRes.data ?? []).map(toFileEntry),
+  };
 }

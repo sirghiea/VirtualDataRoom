@@ -25,7 +25,7 @@ export interface FileEntry {
   extension: string;
   mimeType: string;
   size: number;
-  blobKey: string;
+  storagePath: string;
   createdAt: string;
   updatedAt: string;
 }

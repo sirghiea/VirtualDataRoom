@@ -116,8 +116,8 @@ export default function DataRoomPage() {
     dispatch(setViewingFile(file));
   };
 
-  const getFileBlob = useCallback(async (blobKey: string) => {
-    return storage.getFileBlob(blobKey);
+  const getFileBlob = useCallback(async (storagePath: string) => {
+    return storage.getFileBlob(storagePath);
   }, []);
 
   const getDescendantCounts = useCallback(async (folderId: string) => {
