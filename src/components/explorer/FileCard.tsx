@@ -136,17 +136,15 @@ export default function FileCard({
         className="card-premium inner-glow-rose group relative flex cursor-pointer flex-col rounded-2xl overflow-hidden"
       >
         {/* File preview zone - taller visual area */}
-        <div className="relative h-28 bg-gradient-to-b from-rose-400/[0.04] to-transparent flex items-center justify-center overflow-hidden">
+        <div className="relative h-28 bg-gradient-to-b from-rose-400/[0.04] to-transparent flex items-end justify-center pb-4 overflow-hidden">
           {/* Dot pattern */}
           <div className="absolute inset-0 dot-pattern opacity-30" />
 
-          {/* Decorative page lines */}
-          <div className="absolute inset-x-6 top-5 space-y-2 opacity-[0.06]">
-            <div className="h-[2px] w-full bg-white rounded" />
-            <div className="h-[2px] w-4/5 bg-white rounded" />
-            <div className="h-[2px] w-full bg-white rounded" />
-            <div className="h-[2px] w-3/5 bg-white rounded" />
-            <div className="h-[2px] w-full bg-white rounded" />
+          {/* Decorative page lines — top only, above the icon */}
+          <div className="absolute inset-x-6 top-3 space-y-1.5 opacity-[0.05]">
+            <div className="h-[1.5px] w-full bg-white rounded" />
+            <div className="h-[1.5px] w-4/5 bg-white rounded" />
+            <div className="h-[1.5px] w-3/5 bg-white rounded" />
           </div>
 
           {/* Central icon */}

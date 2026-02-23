@@ -142,7 +142,7 @@ export default function FolderCard({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35, delay: index * 0.05, ease: [0.25, 0.46, 0.45, 0.94] }}
         onClick={() => onOpen(folder.id)}
-        className="card-premium inner-glow-amber group relative flex cursor-pointer flex-col rounded-2xl p-5 overflow-hidden"
+        className="card-premium inner-glow-amber group relative flex cursor-pointer flex-col rounded-2xl p-4 overflow-hidden"
       >
         {/* Dot pattern */}
         <div className="absolute inset-0 dot-pattern opacity-30" />
@@ -177,7 +177,7 @@ export default function FolderCard({
         </div>
 
         {/* Bottom accent */}
-        <div className="relative flex items-center justify-between mt-4 pt-3 border-t border-white/[0.04]">
+        <div className="relative flex items-center justify-between mt-auto pt-3 border-t border-white/[0.04]">
           <span className="text-[10px] text-muted/50 font-medium uppercase tracking-wider">Folder</span>
           <ChevronRight size={15} className="text-muted/40 group-hover:text-amber-400/70 group-hover:translate-x-1 transition-all duration-300" />
         </div>
