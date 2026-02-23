@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { FolderOpen, Search } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
 import type { Folder, FileEntry } from '@/types';
@@ -76,6 +76,29 @@ export default function ContentArea({
   getDescendantCounts,
 }: ContentAreaProps) {
   const { viewMode, sortBy, sortDirection, searchQuery } = useAppSelector((s) => s.ui);
+
+  // Pre-compute folder descendant counts for display
+  const [folderCounts, setFolderCounts] = useState<Record<string, { folders: number; files: number }>>({});
+
+  const childFolderIds = useMemo(
+    () => folders.filter((f) => f.parentId === currentFolderId).map((f) => f.id),
+    [folders, currentFolderId]
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      const results: Record<string, { folders: number; files: number }> = {};
+      await Promise.all(
+        childFolderIds.map(async (id) => {
+          results[id] = await getDescendantCounts(id);
+        })
+      );
+      if (!cancelled) setFolderCounts(results);
+    }
+    load();
+    return () => { cancelled = true; };
+  }, [childFolderIds, getDescendantCounts]);
 
   // All sibling folder names for validation (unfiltered by search)
   const siblingFolderNames = useMemo(() => {
@@ -157,6 +180,7 @@ export default function ContentArea({
               onDelete={onDeleteFolder}
               getDescendantCounts={getDescendantCounts}
               siblingNames={siblingFolderNames}
+              counts={folderCounts[folder.id]}
               viewMode="list"
               index={i}
             />
@@ -189,6 +213,7 @@ export default function ContentArea({
             onDelete={onDeleteFolder}
             getDescendantCounts={getDescendantCounts}
             siblingNames={siblingFolderNames}
+            counts={folderCounts[folder.id]}
             viewMode="grid"
             index={i}
           />

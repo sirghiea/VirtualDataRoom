@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Folder as FolderIcon, MoreVertical, Pencil, Trash2, FolderOpen, ChevronRight } from 'lucide-react';
+import { Folder as FolderIcon, FileText, MoreVertical, Pencil, Trash2, FolderOpen, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import type { Folder } from '@/types';
 import { formatDate } from '@/lib/utils';
@@ -23,6 +23,7 @@ interface FolderCardProps {
   viewMode: 'grid' | 'list';
   index?: number;
   siblingNames?: string[];
+  counts?: { folders: number; files: number };
 }
 
 export default function FolderCard({
@@ -34,6 +35,7 @@ export default function FolderCard({
   viewMode,
   index = 0,
   siblingNames = [],
+  counts,
 }: FolderCardProps) {
   const [renameOpen, setRenameOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -175,6 +177,24 @@ export default function FolderCard({
           </div>
           <div className="shrink-0">{menu}</div>
         </div>
+
+        {/* Content counts */}
+        {counts && (
+          <div className="relative flex items-center gap-4 mt-3">
+            <div className="flex items-center gap-1.5">
+              <FolderIcon size={11} className="text-amber-400/50" />
+              <span className="text-[11px] text-muted/60 tabular-nums">
+                {counts.folders} subfolder{counts.folders !== 1 ? 's' : ''}
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <FileText size={11} className="text-blue-400/50" />
+              <span className="text-[11px] text-muted/60 tabular-nums">
+                {counts.files} file{counts.files !== 1 ? 's' : ''}
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* Bottom accent */}
         <div className="relative flex items-center justify-between mt-auto pt-3 border-t border-white/[0.04]">
