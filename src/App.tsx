@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import { Toaster } from 'sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -11,6 +11,7 @@ import HomePage from '@/pages/HomePage';
 import DataRoomPage from '@/pages/DataRoomPage';
 import LoginPage from '@/pages/LoginPage';
 import SignupPage from '@/pages/SignupPage';
+import { supabase } from '@/lib/supabase';
 
 
 /** Scroll to top on route change and on initial page load / refresh */
@@ -20,6 +21,24 @@ function ScrollToTop() {
     window.scrollTo(0, 0);
   }, [pathname]);
   return null;
+}
+
+/** Handles Supabase email confirmation redirect — exchanges token and navigates to home */
+function AuthCallback() {
+  const navigate = useNavigate();
+  useEffect(() => {
+    supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_IN') {
+        navigate('/', { replace: true });
+      }
+    });
+  }, [navigate]);
+
+  return (
+    <div className="flex h-screen items-center justify-center">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-400" />
+    </div>
+  );
 }
 
 export default function App() {
@@ -34,6 +53,7 @@ export default function App() {
               <Routes>
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/signup" element={<SignupPage />} />
+                <Route path="/auth/callback" element={<AuthCallback />} />
                 <Route
                   path="/"
                   element={
