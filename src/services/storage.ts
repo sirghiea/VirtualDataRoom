@@ -40,11 +40,16 @@ export async function createDataRoom(name: string): Promise<DataRoom> {
   const id = crypto.randomUUID();
   const now = new Date().toISOString();
 
+  // Get current user
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not authenticated');
+
   // Insert data room
   const { error: roomError } = await supabase.from('data_rooms').insert({
     id,
     name,
     root_folder_id: rootFolderId,
+    owner_id: user.id,
     created_at: now,
     updated_at: now,
   });
@@ -61,7 +66,7 @@ export async function createDataRoom(name: string): Promise<DataRoom> {
   });
   if (folderError) throw folderError;
 
-  return { id, name, rootFolderId, createdAt: now, updatedAt: now };
+  return { id, name, rootFolderId, ownerId: user.id, createdAt: now, updatedAt: now };
 }
 
 export async function updateDataRoom(id: string, name: string): Promise<DataRoom> {

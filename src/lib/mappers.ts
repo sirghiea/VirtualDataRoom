@@ -8,6 +8,7 @@ export function toDataRoom(row: any): DataRoom {
     id: row.id,
     name: row.name,
     rootFolderId: row.root_folder_id,
+    ownerId: row.owner_id,
     passwordHash: row.password_hash ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
