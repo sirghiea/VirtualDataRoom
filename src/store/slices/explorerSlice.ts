@@ -12,6 +12,8 @@ interface ExplorerState {
   breadcrumb: Folder[];
   viewingFile: FileEntry | null;
   isLoading: boolean;
+  selectedFolderIds: string[];
+  selectedFileIds: string[];
 }
 
 const initialState: ExplorerState = {
@@ -22,6 +24,8 @@ const initialState: ExplorerState = {
   breadcrumb: [],
   viewingFile: null,
   isLoading: false,
+  selectedFolderIds: [],
+  selectedFileIds: [],
 };
 
 export const openDataRoom = createAsyncThunk('explorer/openDataRoom', async (id: string) => {
@@ -161,6 +165,34 @@ export const moveFolder = createAsyncThunk(
   }
 );
 
+export const bulkDelete = createAsyncThunk(
+  'explorer/bulkDelete',
+  async (
+    { folderIds, fileIds }: { folderIds: string[]; fileIds: string[] },
+    { getState }
+  ) => {
+    for (const folderId of folderIds) {
+      await storage.deleteFolder(folderId);
+    }
+    for (const fileId of fileIds) {
+      await storage.deleteFile(fileId);
+    }
+
+    const state = getState() as RootState;
+    const { currentDataRoom, currentFolderId } = state.explorer;
+
+    const allFolders = currentDataRoom
+      ? await storage.getAllFoldersInDataRoom(currentDataRoom.id)
+      : [];
+    const files =
+      currentDataRoom && currentFolderId
+        ? await storage.getFilesByFolder(currentDataRoom.id, currentFolderId)
+        : [];
+
+    return { allFolders, files };
+  }
+);
+
 const explorerSlice = createSlice({
   name: 'explorer',
   initialState,
@@ -170,6 +202,34 @@ const explorerSlice = createSlice({
     },
     clearExplorer(state) {
       Object.assign(state, initialState);
+    },
+    toggleFolderSelection(state, action: PayloadAction<string>) {
+      const id = action.payload;
+      const idx = state.selectedFolderIds.indexOf(id);
+      if (idx === -1) {
+        state.selectedFolderIds.push(id);
+      } else {
+        state.selectedFolderIds.splice(idx, 1);
+      }
+    },
+    toggleFileSelection(state, action: PayloadAction<string>) {
+      const id = action.payload;
+      const idx = state.selectedFileIds.indexOf(id);
+      if (idx === -1) {
+        state.selectedFileIds.push(id);
+      } else {
+        state.selectedFileIds.splice(idx, 1);
+      }
+    },
+    selectAll(state) {
+      state.selectedFolderIds = state.folders
+        .filter((f) => f.parentId === state.currentFolderId)
+        .map((f) => f.id);
+      state.selectedFileIds = state.currentFiles.map((f) => f.id);
+    },
+    clearSelection(state) {
+      state.selectedFolderIds = [];
+      state.selectedFileIds = [];
     },
   },
   extraReducers: (builder) => {
@@ -186,6 +246,8 @@ const explorerSlice = createSlice({
         state.currentFolderId = action.payload.room.rootFolderId;
         state.currentFiles = action.payload.files;
         state.breadcrumb = action.payload.breadcrumb;
+        state.selectedFolderIds = [];
+        state.selectedFileIds = [];
       })
       .addCase(openDataRoom.rejected, (state) => {
         state.isLoading = false;
@@ -199,6 +261,8 @@ const explorerSlice = createSlice({
         state.currentFolderId = action.payload.folderId;
         state.currentFiles = action.payload.files;
         state.breadcrumb = action.payload.breadcrumb;
+        state.selectedFolderIds = [];
+        state.selectedFileIds = [];
       })
       .addCase(navigateToFolder.rejected, (state) => {
         state.isLoading = false;
@@ -250,9 +314,23 @@ const explorerSlice = createSlice({
       // moveFolder
       .addCase(moveFolder.fulfilled, (state, action) => {
         state.folders = action.payload.allFolders;
+      })
+      // bulkDelete
+      .addCase(bulkDelete.fulfilled, (state, action) => {
+        state.folders = action.payload.allFolders;
+        state.currentFiles = action.payload.files;
+        state.selectedFolderIds = [];
+        state.selectedFileIds = [];
       });
   },
 });
 
-export const { setViewingFile, clearExplorer } = explorerSlice.actions;
+export const {
+  setViewingFile,
+  clearExplorer,
+  toggleFolderSelection,
+  toggleFileSelection,
+  selectAll,
+  clearSelection,
+} = explorerSlice.actions;
 export default explorerSlice.reducer;

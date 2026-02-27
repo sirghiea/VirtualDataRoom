@@ -9,6 +9,8 @@ import {
   ArrowUp,
   ArrowDown,
   X,
+  CheckSquare,
+  Square,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -34,6 +36,9 @@ import {
 interface ToolbarProps {
   onNewFolder: () => void;
   onUploadFiles: (files: File[]) => void;
+  hasSelection: boolean;
+  allSelected: boolean;
+  onToggleSelectAll: () => void;
 }
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024;
@@ -45,7 +50,7 @@ const sortLabels: Record<SortBy, string> = {
   type: 'Type',
 };
 
-export default function Toolbar({ onNewFolder, onUploadFiles }: ToolbarProps) {
+export default function Toolbar({ onNewFolder, onUploadFiles, hasSelection, allSelected, onToggleSelectAll }: ToolbarProps) {
   const dispatch = useAppDispatch();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { viewMode, sortBy, sortDirection, searchQuery } = useAppSelector((s) => s.ui);
@@ -158,6 +163,22 @@ export default function Toolbar({ onNewFolder, onUploadFiles }: ToolbarProps) {
           </ToggleGroupItem>
         </ToggleGroup>
       </div>
+
+      {/* Select all */}
+      <button
+        onClick={onToggleSelectAll}
+        className="flex items-center gap-1.5 text-xs text-muted/70 hover:text-foreground px-2 py-1 rounded-lg hover:bg-white/[0.06] transition-all duration-150"
+        title={allSelected ? 'Deselect all' : 'Select all'}
+      >
+        {allSelected ? (
+          <CheckSquare size={14} className="text-primary" />
+        ) : (
+          <Square size={14} />
+        )}
+        <span className="hidden sm:inline">
+          {hasSelection ? (allSelected ? 'Deselect' : 'Select all') : 'Select'}
+        </span>
+      </button>
 
       <div className="h-5 w-[1px] bg-gradient-to-b from-transparent via-white/[0.08] to-transparent hidden sm:block mx-1" />
 

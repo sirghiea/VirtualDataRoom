@@ -12,7 +12,7 @@ import {
 interface ConfirmDialogProps {
   open: boolean;
   title: string;
-  description: string;
+  description: React.ReactNode;
   confirmLabel?: string;
   onConfirm: () => void;
   onCancel: () => void;
@@ -31,7 +31,7 @@ export default function ConfirmDialog({
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>
-          <AlertDialogDescription>{description}</AlertDialogDescription>
+          <AlertDialogDescription className="break-all">{description}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel onClick={onCancel}>Cancel</AlertDialogCancel>

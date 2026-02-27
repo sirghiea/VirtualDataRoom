@@ -19,32 +19,36 @@ export default function Breadcrumb({ items, onNavigate }: BreadcrumbProps) {
   }
 
   return (
-    <nav className="flex items-center gap-1 text-sm overflow-x-auto">
+    <nav className="flex items-center gap-1 text-sm overflow-x-auto min-w-0">
       {displayItems.map((item, i) => {
         const isRoot = item.parentId === null;
         const isLast = i === displayItems.length - 1;
         const label = isRoot ? 'Root' : item.name;
 
         return (
-          <span key={item.id} className="flex items-center gap-1 shrink-0">
-            {i > 0 && <ChevronRight size={13} className="text-muted/40" />}
+          <span key={item.id} className="flex items-center gap-1 min-w-0">
+            {i > 0 && <ChevronRight size={13} className="text-muted/40 shrink-0" />}
             {truncated && i === 1 && (
               <>
-                <span className="text-muted/40 text-xs">...</span>
-                <ChevronRight size={13} className="text-muted/40" />
+                <span className="text-muted/40 text-xs shrink-0">...</span>
+                <ChevronRight size={13} className="text-muted/40 shrink-0" />
               </>
             )}
             {isLast ? (
-              <span className="font-semibold text-foreground text-sm">
+              <span
+                className="font-semibold text-foreground text-sm truncate max-w-[200px] block"
+                title={label}
+              >
                 {label}
               </span>
             ) : (
               <button
                 onClick={() => onNavigate(item.id)}
-                className="text-muted hover:text-foreground transition-colors duration-150 text-sm flex items-center gap-1"
+                className="text-muted hover:text-foreground transition-colors duration-150 text-sm flex items-center gap-1 min-w-0"
+                title={label}
               >
-                {isRoot && <Home size={13} className="text-muted/60" />}
-                {label}
+                {isRoot && <Home size={13} className="text-muted/60 shrink-0" />}
+                <span className="truncate max-w-[150px]">{label}</span>
               </button>
             )}
           </span>

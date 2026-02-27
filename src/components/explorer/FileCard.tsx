@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { FileText, MoreVertical, Pencil, Trash2, Eye, Download } from 'lucide-react';
+import { FileText, MoreVertical, Pencil, Trash2, Eye, Download, Check } from 'lucide-react';
 import { motion } from 'framer-motion';
 import type { FileEntry } from '@/types';
-import { formatBytes, formatDate } from '@/lib/utils';
+import { cn, formatBytes, formatDate } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
@@ -22,6 +22,8 @@ interface FileCardProps {
   onDelete: (id: string) => void;
   viewMode: 'grid' | 'list';
   index?: number;
+  isSelected?: boolean;
+  onToggleSelect?: (id: string) => void;
 }
 
 export default function FileCard({
@@ -31,6 +33,8 @@ export default function FileCard({
   onDelete,
   viewMode,
   index = 0,
+  isSelected,
+  onToggleSelect,
 }: FileCardProps) {
   const [renameOpen, setRenameOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -78,8 +82,24 @@ export default function FileCard({
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.2, delay: index * 0.02 }}
           onClick={() => onView(file)}
-          className="list-row group flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5"
+          className={cn(
+            'list-row group flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5',
+            isSelected && 'ring-1 ring-primary/40 bg-primary/[0.04]'
+          )}
         >
+          {onToggleSelect && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onToggleSelect(file.id); }}
+              className={cn(
+                'flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition-all duration-150',
+                isSelected
+                  ? 'bg-primary border-primary text-primary-foreground'
+                  : 'border-white/20 hover:border-white/40 opacity-0 group-hover:opacity-100',
+              )}
+            >
+              {isSelected && <Check size={12} />}
+            </button>
+          )}
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-rose-400/15 to-rose-400/5 ring-1 ring-rose-400/10">
             <FileText size={15} className="text-rose-400" />
           </div>
@@ -133,10 +153,35 @@ export default function FileCard({
         onDragStart={(e) => {
           (e as unknown as React.DragEvent).dataTransfer?.setData('text/file-id', file.id);
         }}
-        className="card-premium inner-glow-rose group relative flex cursor-pointer flex-col rounded-2xl overflow-hidden"
+        className={cn(
+          'card-premium inner-glow-rose group relative flex cursor-pointer flex-col rounded-2xl overflow-hidden',
+          isSelected && 'ring-2 ring-primary/50 border-primary/30'
+        )}
       >
         {/* File preview zone - taller visual area */}
         <div className="relative h-28 bg-gradient-to-b from-rose-400/[0.04] to-transparent flex items-center justify-center overflow-hidden">
+          {/* Selection checkbox */}
+          {onToggleSelect && (
+            <div
+              className={cn(
+                'absolute top-3 left-3 z-10 transition-opacity duration-200',
+                isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+              )}
+            >
+              <button
+                onClick={(e) => { e.stopPropagation(); onToggleSelect(file.id); }}
+                className={cn(
+                  'flex h-5 w-5 items-center justify-center rounded-md border transition-all duration-150',
+                  isSelected
+                    ? 'bg-primary border-primary text-primary-foreground'
+                    : 'border-white/20 bg-black/40 hover:border-white/40'
+                )}
+              >
+                {isSelected && <Check size={12} />}
+              </button>
+            </div>
+          )}
+
           {/* Dot pattern */}
           <div className="absolute inset-0 dot-pattern opacity-30" />
 

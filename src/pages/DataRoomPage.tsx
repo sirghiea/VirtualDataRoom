@@ -15,6 +15,11 @@ import {
   deleteFile,
   setViewingFile,
   moveFile,
+  toggleFolderSelection,
+  toggleFileSelection,
+  selectAll,
+  clearSelection,
+  bulkDelete,
 } from '@/store/slices/explorerSlice';
 import { unlockRoom } from '@/store/slices/dataRoomsSlice';
 import { setSidebarOpen } from '@/store/slices/uiSlice';
@@ -24,8 +29,10 @@ import Breadcrumb from '@/components/explorer/Breadcrumb';
 import Toolbar from '@/components/explorer/Toolbar';
 import ContentArea from '@/components/explorer/ContentArea';
 import FolderTree from '@/components/explorer/FolderTree';
+import BulkActionBar from '@/components/explorer/BulkActionBar';
 import FileViewerModal from '@/components/file-viewer/FileViewerModal';
 import RenameDialog from '@/components/shared/RenameDialog';
+import ConfirmDialog from '@/components/shared/ConfirmDialog';
 import PasswordDialog from '@/components/dataroom/PasswordDialog';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -35,7 +42,7 @@ export default function DataRoomPage() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
 
-  const { currentDataRoom, folders, currentFolderId, currentFiles, breadcrumb, viewingFile, isLoading } =
+  const { currentDataRoom, folders, currentFolderId, currentFiles, breadcrumb, viewingFile, isLoading, selectedFolderIds, selectedFileIds } =
     useAppSelector((s) => s.explorer);
   const sidebarOpen = useAppSelector((s) => s.ui.sidebarOpen);
   const unlockedRoomIds = useAppSelector((s) => s.dataRooms.unlockedRoomIds);
@@ -43,6 +50,23 @@ export default function DataRoomPage() {
   const [newFolderOpen, setNewFolderOpen] = useState(false);
   const [fileDragOver, setFileDragOver] = useState(false);
   const [passwordError, setPasswordError] = useState('');
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+
+  const totalSelected = selectedFolderIds.length + selectedFileIds.length;
+  const hasSelection = totalSelected > 0;
+
+  // Check if all visible items are selected
+  const childFolderIds = useMemo(
+    () => folders.filter((f) => f.parentId === currentFolderId).map((f) => f.id),
+    [folders, currentFolderId]
+  );
+  const allSelected = useMemo(() => {
+    const totalItems = childFolderIds.length + currentFiles.length;
+    if (totalItems === 0) return false;
+    const allFoldersSelected = childFolderIds.every((id) => selectedFolderIds.includes(id));
+    const allFilesSelected = currentFiles.every((f) => selectedFileIds.includes(f.id));
+    return allFoldersSelected && allFilesSelected;
+  }, [childFolderIds, currentFiles, selectedFolderIds, selectedFileIds]);
 
   // Sibling folder names for validation
   const siblingFolderNames = useMemo(
@@ -123,6 +147,36 @@ export default function DataRoomPage() {
   const getDescendantCounts = useCallback(async (folderId: string) => {
     return storage.getDescendantCounts(folderId);
   }, []);
+
+  // Selection handlers
+  const handleToggleSelectAll = () => {
+    if (allSelected) {
+      dispatch(clearSelection());
+    } else {
+      dispatch(selectAll());
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    setBulkDeleteOpen(false);
+    const result = await dispatch(bulkDelete({ folderIds: selectedFolderIds, fileIds: selectedFileIds }));
+    if (bulkDelete.fulfilled.match(result)) {
+      toast.success(`Deleted ${totalSelected} item${totalSelected !== 1 ? 's' : ''}`);
+    } else {
+      toast.error('Bulk delete failed');
+    }
+  };
+
+  // Escape key to clear selection
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && hasSelection) {
+        dispatch(clearSelection());
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [hasSelection, dispatch]);
 
   const handleDropFileOnFolder = (fileId: string, targetFolderId: string) => {
     if (targetFolderId === currentFolderId) return;
@@ -312,7 +366,13 @@ export default function DataRoomPage() {
               onNavigate={(fId) => dispatch(navigateToFolder(fId))}
             />
           </div>
-          <Toolbar onNewFolder={handleNewFolder} onUploadFiles={handleUploadFiles} />
+          <Toolbar
+            onNewFolder={handleNewFolder}
+            onUploadFiles={handleUploadFiles}
+            hasSelection={hasSelection}
+            allSelected={allSelected}
+            onToggleSelectAll={handleToggleSelectAll}
+          />
         </div>
 
         {/* Content */}
@@ -328,6 +388,10 @@ export default function DataRoomPage() {
             onRenameFile={handleRenameFile}
             onDeleteFile={handleDeleteFile}
             getDescendantCounts={getDescendantCounts}
+            selectedFolderIds={selectedFolderIds}
+            selectedFileIds={selectedFileIds}
+            onToggleFolderSelect={(id) => dispatch(toggleFolderSelection(id))}
+            onToggleFileSelect={(id) => dispatch(toggleFileSelection(id))}
           />
         </div>
       </main>
@@ -351,6 +415,33 @@ export default function DataRoomPage() {
           onClose={() => dispatch(setViewingFile(null))}
         />
       )}
+
+      {/* Bulk action bar */}
+      <AnimatePresence>
+        {hasSelection && (
+          <BulkActionBar
+            selectedCount={totalSelected}
+            onDelete={() => setBulkDeleteOpen(true)}
+            onClearSelection={() => dispatch(clearSelection())}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Bulk delete confirmation */}
+      <ConfirmDialog
+        open={bulkDeleteOpen}
+        title="Delete Selected Items"
+        description={
+          <>
+            Are you sure you want to delete{' '}
+            <strong>{totalSelected} item{totalSelected !== 1 ? 's' : ''}</strong>?
+            {selectedFolderIds.length > 0 && ' Folders and all their contents will be permanently removed.'}
+            {' '}This action cannot be undone.
+          </>
+        }
+        onConfirm={handleBulkDelete}
+        onCancel={() => setBulkDeleteOpen(false)}
+      />
 
       {/* File drop overlay */}
       <AnimatePresence>

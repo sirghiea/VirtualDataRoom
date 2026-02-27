@@ -166,7 +166,7 @@ function TreeNode({
           ) : (
             <FolderIcon size={14} className="shrink-0 text-amber-400/80" />
           )}
-          <span className="truncate">{isRoot ? 'Root' : folder.name}</span>
+          <span className="truncate" title={isRoot ? undefined : folder.name}>{isRoot ? 'Root' : folder.name}</span>
         </button>
 
         {!isRoot && (

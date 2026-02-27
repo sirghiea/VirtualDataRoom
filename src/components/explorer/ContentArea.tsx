@@ -19,6 +19,10 @@ interface ContentAreaProps {
   onRenameFile: (id: string, name: string) => void;
   onDeleteFile: (id: string) => void;
   getDescendantCounts: (id: string) => Promise<{ folders: number; files: number }>;
+  selectedFolderIds: string[];
+  selectedFileIds: string[];
+  onToggleFolderSelect: (id: string) => void;
+  onToggleFileSelect: (id: string) => void;
 }
 
 function sortFolders(folders: Folder[], sortBy: SortBy, direction: SortDirection): Folder[] {
@@ -74,6 +78,10 @@ export default function ContentArea({
   onRenameFile,
   onDeleteFile,
   getDescendantCounts,
+  selectedFolderIds,
+  selectedFileIds,
+  onToggleFolderSelect,
+  onToggleFileSelect,
 }: ContentAreaProps) {
   const { viewMode, sortBy, sortDirection, searchQuery } = useAppSelector((s) => s.ui);
 
@@ -183,6 +191,8 @@ export default function ContentArea({
               counts={folderCounts[folder.id]}
               viewMode="list"
               index={i}
+              isSelected={selectedFolderIds.includes(folder.id)}
+              onToggleSelect={onToggleFolderSelect}
             />
           ))}
           {sortedFiles.map((file, i) => (
@@ -193,6 +203,8 @@ export default function ContentArea({
               onRename={onRenameFile}
               onDelete={onDeleteFile}
               viewMode="list"
+              isSelected={selectedFileIds.includes(file.id)}
+              onToggleSelect={onToggleFileSelect}
               index={childFolders.length + i}
             />
           ))}
@@ -216,6 +228,8 @@ export default function ContentArea({
             counts={folderCounts[folder.id]}
             viewMode="grid"
             index={i}
+            isSelected={selectedFolderIds.includes(folder.id)}
+            onToggleSelect={onToggleFolderSelect}
           />
         ))}
         {sortedFiles.map((file, i) => (
@@ -226,6 +240,8 @@ export default function ContentArea({
             onRename={onRenameFile}
             onDelete={onDeleteFile}
             viewMode="grid"
+            isSelected={selectedFileIds.includes(file.id)}
+            onToggleSelect={onToggleFileSelect}
             index={childFolders.length + i}
           />
         ))}

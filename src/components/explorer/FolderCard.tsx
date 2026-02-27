@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { Folder as FolderIcon, FileText, MoreVertical, Pencil, Trash2, FolderOpen, ChevronRight } from 'lucide-react';
+import { Folder as FolderIcon, FileText, MoreVertical, Pencil, Trash2, FolderOpen, ChevronRight, Check } from 'lucide-react';
 import { motion } from 'framer-motion';
 import type { Folder } from '@/types';
-import { formatDate } from '@/lib/utils';
+import { cn, formatDate } from '@/lib/utils';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -24,6 +24,8 @@ interface FolderCardProps {
   index?: number;
   siblingNames?: string[];
   counts?: { folders: number; files: number };
+  isSelected?: boolean;
+  onToggleSelect?: (id: string) => void;
 }
 
 export default function FolderCard({
@@ -36,6 +38,8 @@ export default function FolderCard({
   index = 0,
   siblingNames = [],
   counts,
+  isSelected,
+  onToggleSelect,
 }: FolderCardProps) {
   const [renameOpen, setRenameOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -95,8 +99,24 @@ export default function FolderCard({
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.2, delay: index * 0.02 }}
           onClick={() => onOpen(folder.id)}
-          className="list-row group flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5"
+          className={cn(
+            'list-row group flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5',
+            isSelected && 'ring-1 ring-primary/40 bg-primary/[0.04]'
+          )}
         >
+          {onToggleSelect && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onToggleSelect(folder.id); }}
+              className={cn(
+                'flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition-all duration-150',
+                isSelected
+                  ? 'bg-primary border-primary text-primary-foreground'
+                  : 'border-white/20 hover:border-white/40 opacity-0 group-hover:opacity-100',
+              )}
+            >
+              {isSelected && <Check size={12} />}
+            </button>
+          )}
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-amber-400/15 to-amber-400/5 ring-1 ring-amber-400/10">
             <FolderIcon size={15} className="text-amber-400" />
           </div>
@@ -144,8 +164,33 @@ export default function FolderCard({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35, delay: index * 0.05, ease: [0.25, 0.46, 0.45, 0.94] }}
         onClick={() => onOpen(folder.id)}
-        className="card-premium inner-glow-amber group relative flex cursor-pointer flex-col rounded-2xl p-4 overflow-hidden"
+        className={cn(
+          'card-premium inner-glow-amber group relative flex cursor-pointer flex-col rounded-2xl p-4 overflow-hidden',
+          isSelected && 'ring-2 ring-primary/50 border-primary/30'
+        )}
       >
+        {/* Selection checkbox */}
+        {onToggleSelect && (
+          <div
+            className={cn(
+              'absolute top-3 left-3 z-10 transition-opacity duration-200',
+              isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+            )}
+          >
+            <button
+              onClick={(e) => { e.stopPropagation(); onToggleSelect(folder.id); }}
+              className={cn(
+                'flex h-5 w-5 items-center justify-center rounded-md border transition-all duration-150',
+                isSelected
+                  ? 'bg-primary border-primary text-primary-foreground'
+                  : 'border-white/20 bg-black/40 hover:border-white/40'
+              )}
+            >
+              {isSelected && <Check size={12} />}
+            </button>
+          </div>
+        )}
+
         {/* Dot pattern */}
         <div className="absolute inset-0 dot-pattern opacity-30" />
 
