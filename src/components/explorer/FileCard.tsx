@@ -14,6 +14,7 @@ import {
 import { Button } from '@/components/ui/button';
 import RenameDialog from '@/components/shared/RenameDialog';
 import ConfirmDialog from '@/components/shared/ConfirmDialog';
+import TruncatedName from '@/components/shared/TruncatedName';
 
 interface FileCardProps {
   file: FileEntry;
@@ -94,7 +95,7 @@ export default function FileCard({
                 'flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition-all duration-150',
                 isSelected
                   ? 'bg-primary border-primary text-primary-foreground'
-                  : 'border-white/20 hover:border-white/40 opacity-0 group-hover:opacity-100',
+                  : 'border-white/30 hover:border-primary/60 opacity-0 group-hover:opacity-100',
               )}
             >
               {isSelected && <Check size={12} />}
@@ -131,7 +132,7 @@ export default function FileCard({
         <ConfirmDialog
           open={deleteOpen}
           title="Delete File"
-          description={`Are you sure you want to delete "${displayName}"? This action cannot be undone.`}
+          description={<>Are you sure you want to delete <TruncatedName name={displayName} />? This action cannot be undone.</>}
           onConfirm={() => {
             onDelete(file.id);
             setDeleteOpen(false);
@@ -174,7 +175,7 @@ export default function FileCard({
                   'flex h-5 w-5 items-center justify-center rounded-md border transition-all duration-150',
                   isSelected
                     ? 'bg-primary border-primary text-primary-foreground'
-                    : 'border-white/20 bg-black/40 hover:border-white/40'
+                    : 'border-white/30 bg-black/40 hover:border-primary/60'
                 )}
               >
                 {isSelected && <Check size={12} />}
@@ -247,7 +248,7 @@ export default function FileCard({
       <ConfirmDialog
         open={deleteOpen}
         title="Delete File"
-        description={`Are you sure you want to delete "${displayName}"? This action cannot be undone.`}
+        description={<>Are you sure you want to delete <TruncatedName name={displayName} />? This action cannot be undone.</>}
         onConfirm={() => {
           onDelete(file.id);
           setDeleteOpen(false);

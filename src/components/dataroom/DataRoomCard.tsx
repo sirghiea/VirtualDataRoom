@@ -18,6 +18,7 @@ import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { setRoomPassword, unlockRoom, lockRoom } from '@/store/slices/dataRoomsSlice';
 import RenameDialog from '@/components/shared/RenameDialog';
 import ConfirmDialog from '@/components/shared/ConfirmDialog';
+import TruncatedName from '@/components/shared/TruncatedName';
 import PasswordDialog, { type PasswordMode } from '@/components/dataroom/PasswordDialog';
 
 interface DataRoomCardProps {
@@ -279,7 +280,11 @@ export default function DataRoomCard({ dataRoom, onRename, onDelete, index = 0, 
       <ConfirmDialog
         open={deleteOpen}
         title="Delete Data Room"
-        description={`Are you sure you want to delete "${dataRoom.name}"? All folders and files inside will be permanently deleted.`}
+        description={
+          <>
+            Are you sure you want to delete <TruncatedName name={dataRoom.name} />? All folders and files inside will be permanently deleted.
+          </>
+        }
         onConfirm={() => {
           onDelete(dataRoom.id);
           setDeleteOpen(false);
