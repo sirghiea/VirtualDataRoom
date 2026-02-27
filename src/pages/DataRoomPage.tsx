@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { PanelLeftClose, PanelLeft, Upload, FolderUp, Database, Lock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -178,28 +178,52 @@ export default function DataRoomPage() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [hasSelection, dispatch]);
 
+  // Clear drag overlay when window loses focus (switching windows/tabs)
+  useEffect(() => {
+    const clearDrag = () => setFileDragOver(false);
+    window.addEventListener('blur', clearDrag);
+    document.addEventListener('dragend', clearDrag);
+    window.addEventListener('mousedown', clearDrag);
+    return () => {
+      window.removeEventListener('blur', clearDrag);
+      document.removeEventListener('dragend', clearDrag);
+      window.removeEventListener('mousedown', clearDrag);
+    };
+  }, []);
+
   const handleDropFileOnFolder = (fileId: string, targetFolderId: string) => {
     if (targetFolderId === currentFolderId) return;
     dispatch(moveFile({ fileId, targetFolderId }));
     toast.success('File moved');
   };
 
-  // Drag and drop file upload from OS
-  const handleDragOver = (e: React.DragEvent) => {
+  // Drag and drop file upload from OS — use counter to handle nested elements
+  const dragCounter = useRef(0);
+
+  const handleDragEnter = (e: React.DragEvent) => {
     e.preventDefault();
+    dragCounter.current++;
     if (e.dataTransfer.types.includes('Files')) {
       setFileDragOver(true);
     }
   };
 
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
   const handleDragLeave = (e: React.DragEvent) => {
-    if (e.currentTarget === e.target) {
+    e.preventDefault();
+    dragCounter.current--;
+    if (dragCounter.current <= 0) {
+      dragCounter.current = 0;
       setFileDragOver(false);
     }
   };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
+    dragCounter.current = 0;
     setFileDragOver(false);
     const fileList = Array.from(e.dataTransfer.files);
     if (fileList.length > 0) {
@@ -288,6 +312,7 @@ export default function DataRoomPage() {
   return (
     <div
       className="flex h-[calc(100vh-3.75rem)] relative"
+      onDragEnter={handleDragEnter}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
