@@ -170,6 +170,28 @@ export default function FolderCard({
           isSelected && 'ring-2 ring-primary/50 border-primary/30'
         )}
       >
+        {/* Selection checkbox */}
+        {onToggleSelect && (
+          <div
+            className={cn(
+              'absolute top-3 left-3 z-10 transition-opacity duration-200',
+              isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+            )}
+          >
+            <button
+              onClick={(e) => { e.stopPropagation(); onToggleSelect(folder.id); }}
+              className={cn(
+                'flex h-5 w-5 items-center justify-center rounded-md border transition-all duration-150',
+                isSelected
+                  ? 'bg-primary border-primary text-primary-foreground'
+                  : 'border-white/30 bg-black/40 hover:border-primary/60'
+              )}
+            >
+              {isSelected && <Check size={12} />}
+            </button>
+          </div>
+        )}
+
         {/* Dot pattern */}
         <div className="absolute inset-0 dot-pattern opacity-30" />
 
@@ -181,27 +203,6 @@ export default function FolderCard({
 
         <div className="relative flex items-start justify-between">
           <div className="flex items-center gap-3">
-            {/* Selection checkbox */}
-            {onToggleSelect && (
-              <div
-                className={cn(
-                  'shrink-0 transition-opacity duration-200',
-                  isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-                )}
-              >
-                <button
-                  onClick={(e) => { e.stopPropagation(); onToggleSelect(folder.id); }}
-                  className={cn(
-                    'flex h-5 w-5 items-center justify-center rounded-md border transition-all duration-150',
-                    isSelected
-                      ? 'bg-primary border-primary text-primary-foreground'
-                      : 'border-white/30 bg-black/40 hover:border-primary/60'
-                  )}
-                >
-                  {isSelected && <Check size={12} />}
-                </button>
-              </div>
-            )}
             <div className="relative shrink-0">
               <div className="absolute inset-0 bg-amber-400/15 rounded-xl blur-lg opacity-0 group-hover:opacity-60 transition-opacity duration-500" />
               <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400/20 to-amber-400/5 ring-1 ring-amber-400/15 group-hover:ring-amber-400/30 transition-all duration-400 group-hover:shadow-lg group-hover:shadow-amber-400/10">
